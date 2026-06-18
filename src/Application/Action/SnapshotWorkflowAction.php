@@ -8,18 +8,16 @@ use Yammi\Workflow\Application\Contract\GuardRegistry;
 use Yammi\Workflow\Application\Contract\StateStore;
 use Yammi\Workflow\Application\Contract\TransitionAuthorizer;
 use Yammi\Workflow\Application\Contract\TransitionHistory;
-use Yammi\Workflow\Application\Contract\WorkflowKeyResolver;
 use Yammi\Workflow\Application\DTO\WorkflowSnapshotData;
-use Yammi\Workflow\Domain\Workflow\Repository\WorkflowDefinitionRepository;
+use Yammi\Workflow\Application\Service\SubjectDefinitionResolver;
 use Yammi\Workflow\Domain\Workflow\StateMachine;
 use Yammi\Workflow\Domain\Workflow\ValueObject\State;
 
 final class SnapshotWorkflowAction
 {
     public function __construct(
-        private readonly WorkflowDefinitionRepository $definitions,
+        private readonly SubjectDefinitionResolver $resolver,
         private readonly StateStore $states,
-        private readonly WorkflowKeyResolver $keys,
         private readonly TransitionHistory $history,
         private readonly GuardRegistry $guards,
         private readonly TransitionAuthorizer $authorizer,
@@ -27,13 +25,12 @@ final class SnapshotWorkflowAction
 
     public function __invoke(object $subject): WorkflowSnapshotData
     {
-        $key = $this->keys->keyFor($subject);
-        $definition = $this->definitions->find($key);
-        $current = $this->states->current($subject) ?? $definition->initialState();
+        $resolved = $this->resolver->resolve($subject);
+        $current = $this->states->current($subject) ?? $resolved->definition->initialState();
 
         $reachable = array_filter(
-            (new StateMachine($definition))->allowedTransitions($current),
-            fn (State $target): bool => $this->guards->allows($key, $subject, $current->name, $target->name)
+            (new StateMachine($resolved->definition))->allowedTransitions($current),
+            fn (State $target): bool => $this->guards->allows($resolved->key, $subject, $current->name, $target->name)
                 && $this->authorizer->allows($subject, $current->name, $target->name),
         );
 
@@ -43,7 +40,7 @@ final class SnapshotWorkflowAction
         ));
 
         return new WorkflowSnapshotData(
-            $key,
+            $resolved->key,
             $current->name,
             $allowed,
             $this->history->forSubject($subject),

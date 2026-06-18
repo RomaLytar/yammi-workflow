@@ -7,17 +7,15 @@ namespace Yammi\Workflow\Application\Action;
 use Yammi\Workflow\Application\Contract\GuardRegistry;
 use Yammi\Workflow\Application\Contract\StateStore;
 use Yammi\Workflow\Application\Contract\TransitionAuthorizer;
-use Yammi\Workflow\Application\Contract\WorkflowKeyResolver;
-use Yammi\Workflow\Domain\Workflow\Repository\WorkflowDefinitionRepository;
+use Yammi\Workflow\Application\Service\SubjectDefinitionResolver;
 use Yammi\Workflow\Domain\Workflow\StateMachine;
 use Yammi\Workflow\Domain\Workflow\ValueObject\State;
 
 final class AllowedTransitionsAction
 {
     public function __construct(
-        private readonly WorkflowDefinitionRepository $definitions,
+        private readonly SubjectDefinitionResolver $resolver,
         private readonly StateStore $states,
-        private readonly WorkflowKeyResolver $keys,
         private readonly GuardRegistry $guards,
         private readonly TransitionAuthorizer $authorizer,
     ) {}
@@ -27,15 +25,14 @@ final class AllowedTransitionsAction
      */
     public function __invoke(object $subject): array
     {
-        $key = $this->keys->keyFor($subject);
-        $definition = $this->definitions->find($key);
-        $current = $this->states->current($subject) ?? $definition->initialState();
+        $resolved = $this->resolver->resolve($subject);
+        $current = $this->states->current($subject) ?? $resolved->definition->initialState();
 
-        $allowed = (new StateMachine($definition))->allowedTransitions($current);
+        $allowed = (new StateMachine($resolved->definition))->allowedTransitions($current);
 
         return array_values(array_filter(
             $allowed,
-            fn (State $target): bool => $this->guards->allows($key, $subject, $current->name, $target->name)
+            fn (State $target): bool => $this->guards->allows($resolved->key, $subject, $current->name, $target->name)
                 && $this->authorizer->allows($subject, $current->name, $target->name),
         ));
     }

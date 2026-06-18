@@ -14,12 +14,41 @@ final class EloquentWorkflowDefinitionRepository implements WorkflowDefinitionRe
 {
     public function find(string $key): WorkflowDefinition
     {
-        $workflow = WorkflowModel::query()->where('key', $key)->first();
+        return $this->build($this->currentWorkflow($key));
+    }
+
+    public function findByWorkflowId(int $workflowId): WorkflowDefinition
+    {
+        $workflow = WorkflowModel::query()->whereKey($workflowId)->first();
+
+        if ($workflow === null) {
+            throw WorkflowNotFoundException::withKey('#'.$workflowId);
+        }
+
+        return $this->build($workflow);
+    }
+
+    public function currentWorkflowId(string $key): int
+    {
+        return $this->currentWorkflow($key)->id;
+    }
+
+    private function currentWorkflow(string $key): WorkflowModel
+    {
+        $workflow = WorkflowModel::query()
+            ->where('key', $key)
+            ->where('is_current', true)
+            ->first();
 
         if ($workflow === null) {
             throw WorkflowNotFoundException::withKey($key);
         }
 
+        return $workflow;
+    }
+
+    private function build(WorkflowModel $workflow): WorkflowDefinition
+    {
         $keyById = [];
         $states = [];
         $initial = null;

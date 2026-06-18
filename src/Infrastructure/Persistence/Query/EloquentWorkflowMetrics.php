@@ -23,6 +23,7 @@ final class EloquentWorkflowMetrics implements WorkflowMetricsQuery
             ->join("{$workflows} as w", 'w.id', '=', 'ws.workflow_id')
             ->leftJoin("{$instances} as wi", 'wi.state_id', '=', 'ws.id')
             ->where('w.key', $workflow)
+            ->where('w.is_current', true)
             ->groupBy('ws.id', 'ws.key', 'ws.sort')
             ->orderBy('ws.sort')
             ->selectRaw('ws.key as state_key, COUNT(wi.id) as total')

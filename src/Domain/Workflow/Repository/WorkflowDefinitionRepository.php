@@ -9,4 +9,8 @@ use Yammi\Workflow\Domain\Workflow\WorkflowDefinition;
 interface WorkflowDefinitionRepository
 {
     public function find(string $key): WorkflowDefinition;
+
+    public function findByWorkflowId(int $workflowId): WorkflowDefinition;
+
+    public function currentWorkflowId(string $key): int;
 }

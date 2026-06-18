@@ -7,7 +7,6 @@ namespace Yammi\Workflow\Infrastructure\Persistence\Recorder;
 use Yammi\Workflow\Application\Contract\TransitionRecorder;
 use Yammi\Workflow\Application\DTO\ActorData;
 use Yammi\Workflow\Domain\Workflow\ValueObject\State;
-use Yammi\Workflow\Infrastructure\Persistence\Eloquent\WorkflowModel;
 use Yammi\Workflow\Infrastructure\Persistence\Eloquent\WorkflowStateModel;
 use Yammi\Workflow\Infrastructure\Persistence\Eloquent\WorkflowTransitionModel;
 use Yammi\Workflow\Infrastructure\Support\SubjectIdentity;
@@ -17,16 +16,14 @@ use Yammi\Workflow\Infrastructure\Support\SubjectIdentity;
  */
 final class EloquentTransitionRecorder implements TransitionRecorder
 {
-    public function record(object $subject, string $workflow, State $from, State $to, ?ActorData $actor, ?string $reason = null, array $meta = []): void
+    public function record(object $subject, int $workflowId, State $from, State $to, ?ActorData $actor, ?string $reason = null, array $meta = []): void
     {
-        $workflowRow = WorkflowModel::query()->where('key', $workflow)->firstOrFail();
-
         WorkflowTransitionModel::create([
             'subject_type' => SubjectIdentity::type($subject),
             'subject_id' => SubjectIdentity::id($subject),
-            'workflow_id' => $workflowRow->id,
-            'from_state_id' => $this->stateId($workflowRow->id, $from->name),
-            'to_state_id' => $this->stateId($workflowRow->id, $to->name),
+            'workflow_id' => $workflowId,
+            'from_state_id' => $this->stateId($workflowId, $from->name),
+            'to_state_id' => $this->stateId($workflowId, $to->name),
             'actor_type' => $actor?->type,
             'actor_id' => $actor?->id,
             'reason' => $reason,

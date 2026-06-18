@@ -14,7 +14,7 @@ interface TransitionRecorder
      */
     public function record(
         object $subject,
-        string $workflow,
+        int $workflowId,
         State $from,
         State $to,
         ?ActorData $actor,

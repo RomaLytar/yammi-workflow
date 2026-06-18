@@ -11,11 +11,10 @@ use Yammi\Workflow\Application\Contract\StateStore;
 use Yammi\Workflow\Application\Contract\TransitionAuthorizer;
 use Yammi\Workflow\Application\Contract\TransitionRecorder;
 use Yammi\Workflow\Application\Contract\WorkflowEventDispatcher;
-use Yammi\Workflow\Application\Contract\WorkflowKeyResolver;
 use Yammi\Workflow\Application\DTO\TransitionResultData;
+use Yammi\Workflow\Application\Service\SubjectDefinitionResolver;
 use Yammi\Workflow\Domain\Workflow\Exception\TransitionBlockedException;
 use Yammi\Workflow\Domain\Workflow\Exception\UnauthorizedTransitionException;
-use Yammi\Workflow\Domain\Workflow\Repository\WorkflowDefinitionRepository;
 use Yammi\Workflow\Domain\Workflow\StateMachine;
 use Yammi\Workflow\Domain\Workflow\ValueObject\State;
 use Yammi\Workflow\Events\WorkflowTransitioned;
@@ -23,9 +22,8 @@ use Yammi\Workflow\Events\WorkflowTransitioned;
 final class TransitionStateAction
 {
     public function __construct(
-        private readonly WorkflowDefinitionRepository $definitions,
+        private readonly SubjectDefinitionResolver $resolver,
         private readonly StateStore $states,
-        private readonly WorkflowKeyResolver $keys,
         private readonly TransitionRecorder $recorder,
         private readonly WorkflowEventDispatcher $events,
         private readonly ActorResolver $actors,
@@ -39,11 +37,11 @@ final class TransitionStateAction
      */
     public function __invoke(object $subject, string $to, ?string $reason = null, array $meta = []): TransitionResultData
     {
-        $key = $this->keys->keyFor($subject);
-        $definition = $this->definitions->find($key);
+        $resolved = $this->resolver->resolve($subject);
+        $key = $resolved->key;
 
-        $current = $this->states->current($subject) ?? $definition->initialState();
-        $next = (new StateMachine($definition))->transition($current, new State($to));
+        $current = $this->states->current($subject) ?? $resolved->definition->initialState();
+        $next = (new StateMachine($resolved->definition))->transition($current, new State($to));
 
         if (! $this->guards->allows($key, $subject, $current->name, $next->name)) {
             throw TransitionBlockedException::forTransition($key, $current, $next);
@@ -53,10 +51,10 @@ final class TransitionStateAction
             throw UnauthorizedTransitionException::forTransition($key, $current, $next);
         }
 
-        $this->states->put($subject, $next);
+        $this->states->put($subject, $next, $resolved->workflowId);
 
         $actor = $this->actors->resolve();
-        $this->recorder->record($subject, $key, $current, $next, $actor, $reason, $meta);
+        $this->recorder->record($subject, $resolved->workflowId, $current, $next, $actor, $reason, $meta);
         $this->events->dispatch(new WorkflowTransitioned($subject, $key, $current->name, $next->name, $actor, $reason, $meta));
         $this->hooks->run($key, $subject, $current->name, $next->name);
 
