@@ -53,8 +53,11 @@ final class WorkflowManager
         return $this->history->forSubject($subject);
     }
 
-    public function transition(object $subject, string $to): TransitionResultData
+    /**
+     * @param  array<string, mixed>  $meta
+     */
+    public function transition(object $subject, string $to, ?string $reason = null, array $meta = []): TransitionResultData
     {
-        return ($this->transition)($subject, $to);
+        return ($this->transition)($subject, $to, $reason, $meta);
     }
 }

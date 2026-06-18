@@ -12,9 +12,12 @@ use Yammi\Workflow\Domain\Workflow\ValueObject\State;
 
 trait HasWorkflow
 {
-    public function transitionTo(string $state): TransitionResultData
+    /**
+     * @param  array<string, mixed>  $meta
+     */
+    public function transitionTo(string $state, ?string $reason = null, array $meta = []): TransitionResultData
     {
-        return app(TransitionStateAction::class)($this, $state);
+        return app(TransitionStateAction::class)($this, $state, $reason, $meta);
     }
 
     public function currentState(): string
