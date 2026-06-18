@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Yammi\Workflow\Application\Action;
 
+use Yammi\Workflow\Application\Contract\GuardRegistry;
 use Yammi\Workflow\Application\Contract\StateStore;
 use Yammi\Workflow\Application\Contract\WorkflowKeyResolver;
 use Yammi\Workflow\Domain\Workflow\Repository\WorkflowDefinitionRepository;
@@ -16,6 +17,7 @@ final class AllowedTransitionsAction
         private readonly WorkflowDefinitionRepository $definitions,
         private readonly StateStore $states,
         private readonly WorkflowKeyResolver $keys,
+        private readonly GuardRegistry $guards,
     ) {}
 
     /**
@@ -23,9 +25,15 @@ final class AllowedTransitionsAction
      */
     public function __invoke(object $subject): array
     {
-        $definition = $this->definitions->find($this->keys->keyFor($subject));
+        $key = $this->keys->keyFor($subject);
+        $definition = $this->definitions->find($key);
         $current = $this->states->current($subject) ?? $definition->initialState();
 
-        return (new StateMachine($definition))->allowedTransitions($current);
+        $allowed = (new StateMachine($definition))->allowedTransitions($current);
+
+        return array_values(array_filter(
+            $allowed,
+            fn (State $target): bool => $this->guards->allows($key, $subject, $current->name, $target->name),
+        ));
     }
 }
