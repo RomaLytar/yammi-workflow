@@ -8,6 +8,7 @@ use Illuminate\Support\ServiceProvider;
 use Yammi\Workflow\Infrastructure\Provider\DefinitionBindings;
 use Yammi\Workflow\Infrastructure\Provider\GuardBindings;
 use Yammi\Workflow\Infrastructure\Provider\HistoryBindings;
+use Yammi\Workflow\Infrastructure\Provider\HookBindings;
 use Yammi\Workflow\Infrastructure\Provider\ReadBindings;
 use Yammi\Workflow\Infrastructure\Provider\RuntimeBindings;
 
@@ -26,6 +27,7 @@ final class WorkflowServiceProvider extends ServiceProvider
         (new HistoryBindings($this->app))->register();
         (new ReadBindings($this->app))->register();
         (new GuardBindings($this->app))->register();
+        (new HookBindings($this->app))->register();
     }
 
     public function boot(): void
