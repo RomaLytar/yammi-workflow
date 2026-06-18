@@ -55,6 +55,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Authorization
+    |--------------------------------------------------------------------------
+    |
+    | Gate ability consulted before a user-initiated transition. Define it in
+    | your app to restrict who may move a subject; when it is not defined, or
+    | the transition runs without an authenticated user (jobs, commands), the
+    | transition is allowed.
+    |
+    */
+    'authorization' => [
+        'ability' => 'workflow.transition',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Admin UI (Filament)
     |--------------------------------------------------------------------------
     |

@@ -6,6 +6,7 @@ namespace Yammi\Workflow\Application\Action;
 
 use Yammi\Workflow\Application\Contract\GuardRegistry;
 use Yammi\Workflow\Application\Contract\StateStore;
+use Yammi\Workflow\Application\Contract\TransitionAuthorizer;
 use Yammi\Workflow\Application\Contract\TransitionHistory;
 use Yammi\Workflow\Application\Contract\WorkflowKeyResolver;
 use Yammi\Workflow\Application\DTO\WorkflowSnapshotData;
@@ -21,6 +22,7 @@ final class SnapshotWorkflowAction
         private readonly WorkflowKeyResolver $keys,
         private readonly TransitionHistory $history,
         private readonly GuardRegistry $guards,
+        private readonly TransitionAuthorizer $authorizer,
     ) {}
 
     public function __invoke(object $subject): WorkflowSnapshotData
@@ -31,7 +33,8 @@ final class SnapshotWorkflowAction
 
         $reachable = array_filter(
             (new StateMachine($definition))->allowedTransitions($current),
-            fn (State $target): bool => $this->guards->allows($key, $subject, $current->name, $target->name),
+            fn (State $target): bool => $this->guards->allows($key, $subject, $current->name, $target->name)
+                && $this->authorizer->allows($subject, $current->name, $target->name),
         );
 
         $allowed = array_values(array_map(
