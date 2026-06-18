@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 final class WorkflowModel extends Model
 {
-    protected $fillable = ['key', 'name'];
+    protected $fillable = ['key', 'name', 'tenant_id'];
 
     public function getTable(): string
     {
