@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Yammi\Workflow\Infrastructure\StateStore;
 
-use Illuminate\Database\Eloquent\Model;
 use Yammi\Workflow\Application\Contract\StateStore;
 use Yammi\Workflow\Application\Contract\WorkflowKeyResolver;
 use Yammi\Workflow\Domain\Workflow\ValueObject\State;
 use Yammi\Workflow\Infrastructure\Persistence\Eloquent\WorkflowInstanceModel;
 use Yammi\Workflow\Infrastructure\Persistence\Eloquent\WorkflowModel;
 use Yammi\Workflow\Infrastructure\Persistence\Eloquent\WorkflowStateModel;
+use Yammi\Workflow\Infrastructure\Support\SubjectIdentity;
 
 /**
  * @internal
@@ -24,8 +24,8 @@ final class InstanceStateStore implements StateStore
     public function current(object $subject): ?State
     {
         $instance = WorkflowInstanceModel::query()
-            ->where('subject_type', $this->typeOf($subject))
-            ->where('subject_id', $this->idOf($subject))
+            ->where('subject_type', SubjectIdentity::type($subject))
+            ->where('subject_id', SubjectIdentity::id($subject))
             ->first();
 
         if ($instance === null) {
@@ -50,20 +50,10 @@ final class InstanceStateStore implements StateStore
 
         WorkflowInstanceModel::query()->updateOrCreate(
             [
-                'subject_type' => $this->typeOf($subject),
-                'subject_id' => $this->idOf($subject),
+                'subject_type' => SubjectIdentity::type($subject),
+                'subject_id' => SubjectIdentity::id($subject),
             ],
             ['state_id' => $row->id],
         );
-    }
-
-    private function typeOf(object $subject): string
-    {
-        return $subject instanceof Model ? $subject->getMorphClass() : $subject::class;
-    }
-
-    private function idOf(object $subject): string
-    {
-        return $subject instanceof Model ? (string) $subject->getKey() : '';
     }
 }
