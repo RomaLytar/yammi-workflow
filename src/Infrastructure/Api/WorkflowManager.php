@@ -9,6 +9,7 @@ use Yammi\Workflow\Application\Action\CurrentStateAction;
 use Yammi\Workflow\Application\Action\SnapshotWorkflowAction;
 use Yammi\Workflow\Application\Action\TransitionStateAction;
 use Yammi\Workflow\Application\Contract\TransitionHistory;
+use Yammi\Workflow\Application\Contract\WorkflowMetricsQuery;
 use Yammi\Workflow\Application\DTO\TransitionRecordData;
 use Yammi\Workflow\Application\DTO\TransitionResultData;
 use Yammi\Workflow\Application\DTO\WorkflowSnapshotData;
@@ -22,6 +23,7 @@ final class WorkflowManager
         private readonly CurrentStateAction $current,
         private readonly AllowedTransitionsAction $allowed,
         private readonly TransitionHistory $history,
+        private readonly WorkflowMetricsQuery $metrics,
     ) {}
 
     public function for(object $subject): WorkflowSnapshotData
@@ -59,5 +61,13 @@ final class WorkflowManager
     public function transition(object $subject, string $to, ?string $reason = null, array $meta = []): TransitionResultData
     {
         return ($this->transition)($subject, $to, $reason, $meta);
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    public function metrics(string $workflow): array
+    {
+        return $this->metrics->stateDistribution($workflow);
     }
 }
