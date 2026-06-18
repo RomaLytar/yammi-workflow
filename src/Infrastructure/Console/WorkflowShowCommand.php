@@ -26,7 +26,8 @@ final class WorkflowShowCommand extends Command
 
     public function handle(): int
     {
-        $key = (string) $this->argument('key');
+        $argument = $this->argument('key');
+        $key = is_string($argument) ? $argument : '';
 
         try {
             $definition = $this->definitions->find($key);
