@@ -9,11 +9,11 @@ use Filament\Resources\Resource;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Model;
 use Yammi\Workflow\Domain\Approval\Enum\ApprovalStatus;
 use Yammi\Workflow\Facade\Approval;
 use Yammi\Workflow\Filament\Resources\WorkflowApprovalResource\Pages\ListWorkflowApprovals;
 use Yammi\Workflow\Infrastructure\Persistence\Eloquent\WorkflowApprovalModel;
+use Yammi\Workflow\Infrastructure\Presentation\SubjectPresenter;
 
 class WorkflowApprovalResource extends Resource
 {
@@ -31,10 +31,10 @@ class WorkflowApprovalResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('subject_type')
+                TextColumn::make('subject')
                     ->label('Subject')
-                    ->formatStateUsing(static fn (string $state): string => class_basename($state)),
-                TextColumn::make('subject_id')->label('#'),
+                    ->weight('bold')
+                    ->state(static fn (WorkflowApprovalModel $record): string => SubjectPresenter::title($record->subject_type, $record->subject_id)),
                 TextColumn::make('step')->label('Step')->sortable(),
                 TextColumn::make('label')->label('Approver'),
                 TextColumn::make('status')
@@ -106,14 +106,6 @@ class WorkflowApprovalResource extends Resource
 
     private static function subjectOf(WorkflowApprovalModel $record): ?object
     {
-        $class = $record->subject_type;
-
-        if (! class_exists($class)) {
-            return null;
-        }
-
-        $subject = $class::query()->find($record->subject_id);
-
-        return $subject instanceof Model ? $subject : null;
+        return SubjectPresenter::resolve($record->subject_type, $record->subject_id);
     }
 }
