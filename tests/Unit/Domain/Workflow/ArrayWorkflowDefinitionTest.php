@@ -32,6 +32,25 @@ final class ArrayWorkflowDefinitionTest extends TestCase
         $this->assertSame(['draft', 'pending', 'approved', 'rejected'], $names);
     }
 
+    public function test_it_defaults_the_initial_state_to_the_first_declared(): void
+    {
+        $this->assertSame('draft', $this->invoiceDefinition()->initialState()->name);
+    }
+
+    public function test_it_honours_an_explicit_initial_state(): void
+    {
+        $definition = ArrayWorkflowDefinition::fromArray(['a', 'b'], ['a' => ['b']], 'b');
+
+        $this->assertSame('b', $definition->initialState()->name);
+    }
+
+    public function test_it_rejects_an_initial_state_outside_the_declared_set(): void
+    {
+        $this->expectException(InvalidWorkflowDefinitionException::class);
+
+        ArrayWorkflowDefinition::fromArray(['draft'], [], 'pending');
+    }
+
     public function test_it_knows_which_states_it_contains(): void
     {
         $definition = $this->invoiceDefinition();

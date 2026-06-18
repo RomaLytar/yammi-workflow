@@ -25,6 +25,36 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Subjects
+    |--------------------------------------------------------------------------
+    |
+    | Maps a host Eloquent model class to the workflow it runs on (by key).
+    | A model using the HasWorkflow trait resolves its process through this map.
+    |
+    |   \App\Models\Invoice::class => 'invoice',
+    |
+    */
+    'subjects' => [
+        //
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | State storage
+    |--------------------------------------------------------------------------
+    |
+    | Where the current state of a subject is kept. "instance" tracks it in the
+    | workflow_instances table (host schema untouched); "column" keeps it in a
+    | column on the host model named below.
+    |
+    */
+    'state_store' => [
+        'driver' => env('WORKFLOW_STATE_STORE', 'instance'),
+        'column' => 'workflow_state',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Admin UI (Filament)
     |--------------------------------------------------------------------------
     |
