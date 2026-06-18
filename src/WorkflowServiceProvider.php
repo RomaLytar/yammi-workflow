@@ -6,6 +6,7 @@ namespace Yammi\Workflow;
 
 use Illuminate\Support\ServiceProvider;
 use Yammi\Workflow\Infrastructure\Console\TickWorkflowsCommand;
+use Yammi\Workflow\Infrastructure\Provider\ApprovalBindings;
 use Yammi\Workflow\Infrastructure\Provider\AuthorizationBindings;
 use Yammi\Workflow\Infrastructure\Provider\DefinitionBindings;
 use Yammi\Workflow\Infrastructure\Provider\GuardBindings;
@@ -33,6 +34,7 @@ final class WorkflowServiceProvider extends ServiceProvider
         (new HookBindings($this->app))->register();
         (new AuthorizationBindings($this->app))->register();
         (new TimerBindings($this->app))->register();
+        (new ApprovalBindings($this->app))->register();
     }
 
     public function boot(): void
