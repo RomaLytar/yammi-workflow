@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace Yammi\Workflow;
 
 use Illuminate\Support\ServiceProvider;
+use Yammi\Workflow\Infrastructure\Console\PruneHistoryCommand;
 use Yammi\Workflow\Infrastructure\Console\TickWorkflowsCommand;
+use Yammi\Workflow\Infrastructure\Console\WorkflowListCommand;
+use Yammi\Workflow\Infrastructure\Console\WorkflowShowCommand;
 use Yammi\Workflow\Infrastructure\Provider\ApprovalBindings;
 use Yammi\Workflow\Infrastructure\Provider\AuthorizationBindings;
 use Yammi\Workflow\Infrastructure\Provider\DefinitionBindings;
@@ -42,7 +45,12 @@ final class WorkflowServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(self::MIGRATIONS_PATH);
 
         if ($this->app->runningInConsole()) {
-            $this->commands([TickWorkflowsCommand::class]);
+            $this->commands([
+                TickWorkflowsCommand::class,
+                WorkflowListCommand::class,
+                WorkflowShowCommand::class,
+                PruneHistoryCommand::class,
+            ]);
 
             $this->publishes(
                 [self::CONFIG_PATH => config_path('workflow.php')],
