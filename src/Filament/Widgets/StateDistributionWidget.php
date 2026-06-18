@@ -10,7 +10,7 @@ use Yammi\Workflow\Infrastructure\Persistence\Eloquent\WorkflowStateModel;
 
 class StateDistributionWidget extends StatsOverviewWidget
 {
-    protected static ?string $heading = 'Instances by state';
+    protected ?string $heading = 'Instances by state';
 
     protected function getStats(): array
     {
