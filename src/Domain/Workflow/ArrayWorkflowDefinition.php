@@ -17,13 +17,14 @@ final class ArrayWorkflowDefinition implements WorkflowDefinition
     private function __construct(
         private readonly array $states,
         private readonly array $transitions,
+        private readonly State $initial,
     ) {}
 
     /**
      * @param  list<string>  $states
      * @param  array<string, list<string>>  $transitions
      */
-    public static function fromArray(array $states, array $transitions): self
+    public static function fromArray(array $states, array $transitions, ?string $initial = null): self
     {
         if ($states === []) {
             throw InvalidWorkflowDefinitionException::noStates();
@@ -34,6 +35,12 @@ final class ArrayWorkflowDefinition implements WorkflowDefinition
         foreach ($states as $name) {
             $state = new State($name);
             $indexed[$state->name] = $state;
+        }
+
+        $initialState = new State($initial ?? $states[0]);
+
+        if (! isset($indexed[$initialState->name])) {
+            throw InvalidWorkflowDefinitionException::unknownInitialState($initialState->name);
         }
 
         $edges = [];
@@ -56,12 +63,17 @@ final class ArrayWorkflowDefinition implements WorkflowDefinition
             }
         }
 
-        return new self($indexed, $edges);
+        return new self($indexed, $edges, $initialState);
     }
 
     public function states(): array
     {
         return array_values($this->states);
+    }
+
+    public function initialState(): State
+    {
+        return $this->initial;
     }
 
     public function hasState(State $state): bool

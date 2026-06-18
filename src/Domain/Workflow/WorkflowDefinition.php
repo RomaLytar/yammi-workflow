@@ -13,6 +13,8 @@ interface WorkflowDefinition
      */
     public function states(): array;
 
+    public function initialState(): State;
+
     public function hasState(State $state): bool;
 
     public function allows(State $from, State $to): bool;

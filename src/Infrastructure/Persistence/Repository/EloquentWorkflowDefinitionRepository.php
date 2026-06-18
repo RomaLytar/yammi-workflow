@@ -22,10 +22,15 @@ final class EloquentWorkflowDefinitionRepository implements WorkflowDefinitionRe
 
         $keyById = [];
         $states = [];
+        $initial = null;
 
         foreach ($workflow->states()->orderBy('sort')->get() as $state) {
             $keyById[$state->id] = $state->key;
             $states[] = $state->key;
+
+            if ($state->is_initial) {
+                $initial = $state->key;
+            }
         }
 
         $transitions = [];
@@ -34,6 +39,6 @@ final class EloquentWorkflowDefinitionRepository implements WorkflowDefinitionRe
             $transitions[$keyById[$definition->from_state_id]][] = $keyById[$definition->to_state_id];
         }
 
-        return ArrayWorkflowDefinition::fromArray($states, $transitions);
+        return ArrayWorkflowDefinition::fromArray($states, $transitions, $initial);
     }
 }
