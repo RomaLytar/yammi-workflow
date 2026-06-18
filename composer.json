@@ -1,0 +1,93 @@
+{
+    "name": "romalytar/yammi-workflow-laravel",
+    "description": "Workflow, state machine and approval engine for Laravel. Model business processes as explicit states and guarded transitions, drive multi-step approvals with full history, and run side effects on Laravel queues, events and notifications - with a Filament UI on top.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "laravel",
+        "laravel-package",
+        "php",
+        "workflow",
+        "bpm",
+        "business-process",
+        "state-machine",
+        "approval",
+        "approval-workflow",
+        "transitions",
+        "process-automation",
+        "filament",
+        "eloquent"
+    ],
+    "homepage": "https://github.com/RomaLytar/yammi-workflow",
+    "support": {
+        "issues": "https://github.com/RomaLytar/yammi-workflow/issues",
+        "source": "https://github.com/RomaLytar/yammi-workflow"
+    },
+    "authors": [
+        {
+            "name": "Roma Lytar",
+            "email": "romalytar@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "ext-json": "*",
+        "illuminate/contracts": "^9.0 || ^10.0 || ^11.0 || ^12.0 || ^13.0",
+        "illuminate/database": "^9.0 || ^10.0 || ^11.0 || ^12.0 || ^13.0",
+        "illuminate/events": "^9.0 || ^10.0 || ^11.0 || ^12.0 || ^13.0",
+        "illuminate/support": "^9.0 || ^10.0 || ^11.0 || ^12.0 || ^13.0"
+    },
+    "require-dev": {
+        "brianium/paratest": "^7.0",
+        "larastan/larastan": "^2.0",
+        "laravel/pint": "^1.0",
+        "orchestra/testbench": "^7.0 || ^8.0 || ^9.0",
+        "phpstan/phpstan": "^1.10",
+        "phpunit/phpunit": "^9.6 || ^10.0 || ^11.0"
+    },
+    "suggest": {
+        "filament/filament": "Required for the workflow and approvals admin UI (^3.0)."
+    },
+    "autoload": {
+        "psr-4": {
+            "Yammi\\Workflow\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Yammi\\Workflow\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Yammi\\Workflow\\WorkflowServiceProvider"
+            ]
+        }
+    },
+    "scripts": {
+        "test": "paratest --processes 8",
+        "test:coverage": "phpunit --coverage-text",
+        "lint": "pint --test",
+        "lint:fix": "pint",
+        "analyse": "phpstan analyse"
+    },
+    "config": {
+        "sort-packages": true,
+        "preferred-install": "dist",
+        "optimize-autoloader": true,
+        "policy": {
+            "advisories": {
+                "ignore-id": [
+                    "PKSA-m5cs-t1y6-qpcs",
+                    "PKSA-3r5d-mb8f-1qw9",
+                    "PKSA-mdq4-51ck-6kdq",
+                    "PKSA-8qx3-n5y5-vvnd",
+                    "PKSA-w7xr-vk7n-rstm"
+                ]
+            }
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
