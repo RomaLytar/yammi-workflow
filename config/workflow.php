@@ -15,6 +15,9 @@ return [
     |
     */
     'tables' => [
+        'workflows' => 'workflows',
+        'states' => 'workflow_states',
+        'transition_defs' => 'workflow_transition_defs',
         'instances' => 'workflow_instances',
         'transitions' => 'workflow_transitions',
         'approvals' => 'workflow_approvals',
