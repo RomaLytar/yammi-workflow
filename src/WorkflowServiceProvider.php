@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Yammi\Workflow;
 
 use Illuminate\Support\ServiceProvider;
+use Yammi\Workflow\Infrastructure\Provider\DefinitionBindings;
 
 final class WorkflowServiceProvider extends ServiceProvider
 {
@@ -15,6 +16,8 @@ final class WorkflowServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(self::CONFIG_PATH, 'workflow');
+
+        (new DefinitionBindings($this->app))->register();
     }
 
     public function boot(): void

@@ -17,4 +17,9 @@ final class InvalidWorkflowDefinitionException extends DomainException
     {
         return new self(sprintf('Transition references state "%s" which is not declared.', $name));
     }
+
+    public static function unknownInitialState(string $name): self
+    {
+        return new self(sprintf('Initial state "%s" is not one of the declared states.', $name));
+    }
 }
