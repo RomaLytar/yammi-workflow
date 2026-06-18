@@ -27,9 +27,24 @@ final class WorkflowImporter
         }
 
         $this->connections->connection()->transaction(function () use ($blueprint): void {
+            $previous = WorkflowModel::query()
+                ->where('key', $blueprint->key)
+                ->where('is_current', true)
+                ->first();
+
+            $version = 1;
+
+            if ($previous !== null) {
+                $version = $previous->version + 1;
+                $previous->is_current = false;
+                $previous->save();
+            }
+
             $workflow = WorkflowModel::create([
                 'key' => $blueprint->key,
                 'name' => $blueprint->name,
+                'version' => $version,
+                'is_current' => true,
             ]);
 
             $stateIds = [];

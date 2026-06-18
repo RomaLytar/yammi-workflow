@@ -19,16 +19,18 @@ final class WorkflowListCommand extends Command
     public function handle(): int
     {
         $rows = WorkflowModel::query()
+            ->where('is_current', true)
             ->orderBy('key')
             ->get()
             ->map(static fn (WorkflowModel $workflow): array => [
                 $workflow->key,
                 $workflow->name,
+                (string) $workflow->version,
                 (string) $workflow->states()->count(),
             ])
             ->all();
 
-        $this->table(['Key', 'Name', 'States'], $rows);
+        $this->table(['Key', 'Name', 'Version', 'States'], $rows);
 
         return self::SUCCESS;
     }

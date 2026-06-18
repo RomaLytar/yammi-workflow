@@ -29,11 +29,16 @@ final class ColumnStateStore implements StateStore
         return new State((string) $value);
     }
 
-    public function put(object $subject, State $state): void
+    public function put(object $subject, State $state, int $workflowId): void
     {
         $model = $this->model($subject);
         $model->setAttribute($this->column, $state->name);
         $model->save();
+    }
+
+    public function pinnedWorkflowId(object $subject): ?int
+    {
+        return null;
     }
 
     private function model(object $subject): Model

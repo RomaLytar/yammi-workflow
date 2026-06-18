@@ -11,12 +11,19 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $id
  * @property string $key
  * @property string $name
+ * @property int $version
+ * @property bool $is_current
  *
  * @internal
  */
 final class WorkflowModel extends Model
 {
-    protected $fillable = ['key', 'name', 'tenant_id'];
+    protected $fillable = ['key', 'name', 'version', 'is_current', 'tenant_id'];
+
+    protected $casts = [
+        'version' => 'integer',
+        'is_current' => 'boolean',
+    ];
 
     public function getTable(): string
     {
