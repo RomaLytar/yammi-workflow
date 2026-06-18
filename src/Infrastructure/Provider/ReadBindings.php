@@ -6,8 +6,10 @@ namespace Yammi\Workflow\Infrastructure\Provider;
 
 use Illuminate\Contracts\Foundation\Application;
 use Yammi\Workflow\Application\Contract\TransitionHistory;
+use Yammi\Workflow\Application\Contract\WorkflowMetricsQuery;
 use Yammi\Workflow\Infrastructure\Api\WorkflowManager;
 use Yammi\Workflow\Infrastructure\Persistence\Query\EloquentTransitionHistory;
+use Yammi\Workflow\Infrastructure\Persistence\Query\EloquentWorkflowMetrics;
 
 /**
  * @internal
@@ -21,6 +23,7 @@ final class ReadBindings
     public function register(): void
     {
         $this->app->bind(TransitionHistory::class, EloquentTransitionHistory::class);
+        $this->app->bind(WorkflowMetricsQuery::class, EloquentWorkflowMetrics::class);
         $this->app->singleton(WorkflowManager::class);
     }
 }
