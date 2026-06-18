@@ -6,6 +6,7 @@ namespace Yammi\Workflow\Application\Action;
 
 use Yammi\Workflow\Application\Contract\GuardRegistry;
 use Yammi\Workflow\Application\Contract\StateStore;
+use Yammi\Workflow\Application\Contract\TransitionAuthorizer;
 use Yammi\Workflow\Application\Contract\WorkflowKeyResolver;
 use Yammi\Workflow\Domain\Workflow\Repository\WorkflowDefinitionRepository;
 use Yammi\Workflow\Domain\Workflow\StateMachine;
@@ -18,6 +19,7 @@ final class AllowedTransitionsAction
         private readonly StateStore $states,
         private readonly WorkflowKeyResolver $keys,
         private readonly GuardRegistry $guards,
+        private readonly TransitionAuthorizer $authorizer,
     ) {}
 
     /**
@@ -33,7 +35,8 @@ final class AllowedTransitionsAction
 
         return array_values(array_filter(
             $allowed,
-            fn (State $target): bool => $this->guards->allows($key, $subject, $current->name, $target->name),
+            fn (State $target): bool => $this->guards->allows($key, $subject, $current->name, $target->name)
+                && $this->authorizer->allows($subject, $current->name, $target->name),
         ));
     }
 }
