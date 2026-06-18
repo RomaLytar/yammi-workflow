@@ -34,7 +34,10 @@ final class TransitionStateAction
         private readonly TransitionAuthorizer $authorizer,
     ) {}
 
-    public function __invoke(object $subject, string $to): TransitionResultData
+    /**
+     * @param  array<string, mixed>  $meta
+     */
+    public function __invoke(object $subject, string $to, ?string $reason = null, array $meta = []): TransitionResultData
     {
         $key = $this->keys->keyFor($subject);
         $definition = $this->definitions->find($key);
@@ -53,8 +56,8 @@ final class TransitionStateAction
         $this->states->put($subject, $next);
 
         $actor = $this->actors->resolve();
-        $this->recorder->record($subject, $key, $current, $next, $actor);
-        $this->events->dispatch(new WorkflowTransitioned($subject, $key, $current->name, $next->name, $actor));
+        $this->recorder->record($subject, $key, $current, $next, $actor, $reason, $meta);
+        $this->events->dispatch(new WorkflowTransitioned($subject, $key, $current->name, $next->name, $actor, $reason, $meta));
         $this->hooks->run($key, $subject, $current->name, $next->name);
 
         return new TransitionResultData($key, $current->name, $next->name);

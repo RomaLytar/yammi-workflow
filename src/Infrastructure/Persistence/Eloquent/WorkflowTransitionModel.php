@@ -15,6 +15,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $to_state_id
  * @property string|null $actor_type
  * @property string|null $actor_id
+ * @property string|null $reason
+ * @property array<string, mixed>|null $meta
  *
  * @internal
  */
@@ -30,12 +32,15 @@ final class WorkflowTransitionModel extends Model
         'to_state_id',
         'actor_type',
         'actor_id',
+        'reason',
+        'meta',
     ];
 
     protected $casts = [
         'workflow_id' => 'integer',
         'from_state_id' => 'integer',
         'to_state_id' => 'integer',
+        'meta' => 'array',
     ];
 
     public function getTable(): string

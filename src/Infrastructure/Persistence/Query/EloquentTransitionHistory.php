@@ -31,14 +31,22 @@ final class EloquentTransitionHistory implements TransitionHistory
                 "{$transitions}.actor_type as actor_type",
                 "{$transitions}.actor_id as actor_id",
                 "{$transitions}.created_at as created_at",
+                "{$transitions}.reason as reason",
+                "{$transitions}.meta as meta",
             ]);
 
-        return $rows->map(static fn (WorkflowTransitionModel $row): TransitionRecordData => new TransitionRecordData(
-            (string) $row->getAttribute('from_key'),
-            (string) $row->getAttribute('to_key'),
-            $row->actor_type,
-            $row->actor_id,
-            (string) $row->getAttribute('created_at'),
-        ))->values()->all();
+        return $rows->map(static function (WorkflowTransitionModel $row): TransitionRecordData {
+            $meta = $row->meta;
+
+            return new TransitionRecordData(
+                (string) $row->getAttribute('from_key'),
+                (string) $row->getAttribute('to_key'),
+                $row->actor_type,
+                $row->actor_id,
+                (string) $row->getAttribute('created_at'),
+                $row->reason,
+                is_array($meta) ? $meta : [],
+            );
+        })->values()->all();
     }
 }

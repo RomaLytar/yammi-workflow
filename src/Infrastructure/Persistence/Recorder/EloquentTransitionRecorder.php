@@ -17,7 +17,7 @@ use Yammi\Workflow\Infrastructure\Support\SubjectIdentity;
  */
 final class EloquentTransitionRecorder implements TransitionRecorder
 {
-    public function record(object $subject, string $workflow, State $from, State $to, ?ActorData $actor): void
+    public function record(object $subject, string $workflow, State $from, State $to, ?ActorData $actor, ?string $reason = null, array $meta = []): void
     {
         $workflowRow = WorkflowModel::query()->where('key', $workflow)->firstOrFail();
 
@@ -29,6 +29,8 @@ final class EloquentTransitionRecorder implements TransitionRecorder
             'to_state_id' => $this->stateId($workflowRow->id, $to->name),
             'actor_type' => $actor?->type,
             'actor_id' => $actor?->id,
+            'reason' => $reason,
+            'meta' => $meta === [] ? null : $meta,
         ]);
     }
 
