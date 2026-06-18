@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace Yammi\Workflow\Application\Action;
 
+use Yammi\Workflow\Application\Contract\ActorResolver;
 use Yammi\Workflow\Application\Contract\StateStore;
+use Yammi\Workflow\Application\Contract\TransitionRecorder;
+use Yammi\Workflow\Application\Contract\WorkflowEventDispatcher;
 use Yammi\Workflow\Application\Contract\WorkflowKeyResolver;
 use Yammi\Workflow\Application\DTO\TransitionResultData;
 use Yammi\Workflow\Domain\Workflow\Repository\WorkflowDefinitionRepository;
 use Yammi\Workflow\Domain\Workflow\StateMachine;
 use Yammi\Workflow\Domain\Workflow\ValueObject\State;
+use Yammi\Workflow\Events\WorkflowTransitioned;
 
 final class TransitionStateAction
 {
@@ -17,6 +21,9 @@ final class TransitionStateAction
         private readonly WorkflowDefinitionRepository $definitions,
         private readonly StateStore $states,
         private readonly WorkflowKeyResolver $keys,
+        private readonly TransitionRecorder $recorder,
+        private readonly WorkflowEventDispatcher $events,
+        private readonly ActorResolver $actors,
     ) {}
 
     public function __invoke(object $subject, string $to): TransitionResultData
@@ -28,6 +35,10 @@ final class TransitionStateAction
         $next = (new StateMachine($definition))->transition($current, new State($to));
 
         $this->states->put($subject, $next);
+
+        $actor = $this->actors->resolve();
+        $this->recorder->record($subject, $key, $current, $next, $actor);
+        $this->events->dispatch(new WorkflowTransitioned($subject, $key, $current->name, $next->name, $actor));
 
         return new TransitionResultData($key, $current->name, $next->name);
     }
