@@ -9,11 +9,11 @@ use Filament\Resources\Resource;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Model;
 use Yammi\Workflow\Facade\Workflow;
 use Yammi\Workflow\Filament\Resources\WorkflowInstanceResource\Pages\ListWorkflowInstances;
 use Yammi\Workflow\Infrastructure\Persistence\Eloquent\WorkflowInstanceModel;
 use Yammi\Workflow\Infrastructure\Persistence\Eloquent\WorkflowStateModel;
+use Yammi\Workflow\Infrastructure\Presentation\SubjectPresenter;
 
 class WorkflowInstanceResource extends Resource
 {
@@ -39,10 +39,10 @@ class WorkflowInstanceResource extends Resource
 
         return $table
             ->columns([
-                TextColumn::make('subject_type')
+                TextColumn::make('subject')
                     ->label('Subject')
-                    ->formatStateUsing(static fn (string $state): string => class_basename($state).' #'),
-                TextColumn::make('subject_id')->label('')->grow(false),
+                    ->weight('bold')
+                    ->state(static fn (WorkflowInstanceModel $record): string => SubjectPresenter::title($record->subject_type, $record->subject_id)),
                 TextColumn::make('state')
                     ->label('State')
                     ->badge()
@@ -88,14 +88,6 @@ class WorkflowInstanceResource extends Resource
 
     private static function subjectOf(WorkflowInstanceModel $record): ?object
     {
-        $class = $record->subject_type;
-
-        if (! class_exists($class)) {
-            return null;
-        }
-
-        $subject = $class::query()->find($record->subject_id);
-
-        return $subject instanceof Model ? $subject : null;
+        return SubjectPresenter::resolve($record->subject_type, $record->subject_id);
     }
 }
