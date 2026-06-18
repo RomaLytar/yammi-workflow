@@ -70,6 +70,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Multi-tenancy
+    |--------------------------------------------------------------------------
+    |
+    | Bind Yammi\Workflow\Application\Contract\TenantResolver to your own
+    | implementation to scope every workflow, instance, transition and
+    | approval to the current tenant. When the resolver returns null
+    | (the default), the package behaves as a single-tenant app.
+    |
+    */
+    'tenancy' => [
+        'column' => 'tenant_id',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Admin UI (Filament)
     |--------------------------------------------------------------------------
     |

@@ -17,6 +17,7 @@ use Yammi\Workflow\Infrastructure\Provider\HistoryBindings;
 use Yammi\Workflow\Infrastructure\Provider\HookBindings;
 use Yammi\Workflow\Infrastructure\Provider\ReadBindings;
 use Yammi\Workflow\Infrastructure\Provider\RuntimeBindings;
+use Yammi\Workflow\Infrastructure\Provider\TenancyBindings;
 use Yammi\Workflow\Infrastructure\Provider\TimerBindings;
 
 final class WorkflowServiceProvider extends ServiceProvider
@@ -38,11 +39,14 @@ final class WorkflowServiceProvider extends ServiceProvider
         (new AuthorizationBindings($this->app))->register();
         (new TimerBindings($this->app))->register();
         (new ApprovalBindings($this->app))->register();
+        (new TenancyBindings($this->app))->register();
     }
 
     public function boot(): void
     {
         $this->loadMigrationsFrom(self::MIGRATIONS_PATH);
+
+        (new TenancyBindings($this->app))->boot();
 
         if ($this->app->runningInConsole()) {
             $this->commands([

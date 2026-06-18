@@ -34,6 +34,7 @@ final class WorkflowTransitionModel extends Model
         'actor_id',
         'reason',
         'meta',
+        'tenant_id',
     ];
 
     protected $casts = [

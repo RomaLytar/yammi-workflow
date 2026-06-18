@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 final class WorkflowInstanceModel extends Model
 {
-    protected $fillable = ['subject_type', 'subject_id', 'state_id'];
+    protected $fillable = ['subject_type', 'subject_id', 'state_id', 'tenant_id'];
 
     protected $casts = [
         'state_id' => 'integer',

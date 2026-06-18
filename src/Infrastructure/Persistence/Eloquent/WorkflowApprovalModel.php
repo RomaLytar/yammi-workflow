@@ -34,6 +34,7 @@ final class WorkflowApprovalModel extends Model
         'decided_by_id',
         'comment',
         'decided_at',
+        'tenant_id',
     ];
 
     protected $casts = [
