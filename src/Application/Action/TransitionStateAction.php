@@ -6,6 +6,7 @@ namespace Yammi\Workflow\Application\Action;
 
 use Yammi\Workflow\Application\Contract\ActorResolver;
 use Yammi\Workflow\Application\Contract\GuardRegistry;
+use Yammi\Workflow\Application\Contract\HookRegistry;
 use Yammi\Workflow\Application\Contract\StateStore;
 use Yammi\Workflow\Application\Contract\TransitionRecorder;
 use Yammi\Workflow\Application\Contract\WorkflowEventDispatcher;
@@ -27,6 +28,7 @@ final class TransitionStateAction
         private readonly WorkflowEventDispatcher $events,
         private readonly ActorResolver $actors,
         private readonly GuardRegistry $guards,
+        private readonly HookRegistry $hooks,
     ) {}
 
     public function __invoke(object $subject, string $to): TransitionResultData
@@ -46,6 +48,7 @@ final class TransitionStateAction
         $actor = $this->actors->resolve();
         $this->recorder->record($subject, $key, $current, $next, $actor);
         $this->events->dispatch(new WorkflowTransitioned($subject, $key, $current->name, $next->name, $actor));
+        $this->hooks->run($key, $subject, $current->name, $next->name);
 
         return new TransitionResultData($key, $current->name, $next->name);
     }
