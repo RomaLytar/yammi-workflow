@@ -9,7 +9,9 @@ use Filament\Pages\Page;
 use Yammi\Workflow\Application\Contract\ActionCatalog;
 use Yammi\Workflow\Domain\Workflow\Condition\ConditionOperator;
 use Yammi\Workflow\Infrastructure\Definition\WorkflowImporter;
+use Yammi\Workflow\Infrastructure\Designer\DesignerLoader;
 use Yammi\Workflow\Infrastructure\Designer\GraphToBlueprint;
+use Yammi\Workflow\Infrastructure\Persistence\Eloquent\WorkflowModel;
 
 class WorkflowDesigner extends Page
 {
@@ -52,6 +54,39 @@ class WorkflowDesigner extends Page
      * @var list<array{from: string, to: string, steps: string}>
      */
     public array $approvals = [];
+
+    public string $workflowKey = '';
+
+    public function load(): void
+    {
+        if ($this->workflowKey === '') {
+            return;
+        }
+
+        $data = app(DesignerLoader::class)->load($this->workflowKey);
+
+        $this->graph = $data['graph'];
+        $this->conditions = $data['conditions'];
+        $this->actions = $data['actions'];
+        $this->approvals = $data['approvals'];
+
+        $this->dispatch('workflow-loaded');
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function workflowOptions(): array
+    {
+        /** @var array<string, string> $options */
+        $options = WorkflowModel::query()
+            ->where('is_current', true)
+            ->orderBy('key')
+            ->pluck('key', 'key')
+            ->all();
+
+        return $options;
+    }
 
     public function addRule(): void
     {
