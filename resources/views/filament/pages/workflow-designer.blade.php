@@ -66,6 +66,46 @@
         @endforelse
     </div>
 
+    <div class="mt-6 space-y-3">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-base font-semibold text-gray-950 dark:text-white">Actions (run on transition)</h3>
+                <p class="text-sm text-gray-500">Wire an app-registered action to a transition — no code.</p>
+            </div>
+            <x-filament::button size="sm" color="gray" wire:click="addAction" icon="heroicon-o-plus">
+                Add action
+            </x-filament::button>
+        </div>
+
+        @forelse ($actions as $i => $rule)
+            <div class="flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 p-2 dark:border-gray-700">
+                <select wire:model="actions.{{ $i }}.from" class="rounded-md border-gray-300 text-sm dark:bg-gray-800">
+                    <option value="">from…</option>
+                    @foreach ($this->stateOptions() as $value => $label)
+                        <option value="{{ $value }}">{{ $label }}</option>
+                    @endforeach
+                </select>
+                <span class="text-gray-400">&rarr;</span>
+                <select wire:model="actions.{{ $i }}.to" class="rounded-md border-gray-300 text-sm dark:bg-gray-800">
+                    <option value="">to…</option>
+                    @foreach ($this->stateOptions() as $value => $label)
+                        <option value="{{ $value }}">{{ $label }}</option>
+                    @endforeach
+                </select>
+                <span class="text-sm text-gray-500">run</span>
+                <select wire:model="actions.{{ $i }}.action" class="rounded-md border-gray-300 text-sm dark:bg-gray-800">
+                    <option value="">action…</option>
+                    @foreach ($this->actionOptions() as $value => $label)
+                        <option value="{{ $value }}">{{ $label }}</option>
+                    @endforeach
+                </select>
+                <button type="button" wire:click="removeAction({{ $i }})" class="text-danger-600 hover:text-danger-500">&times;</button>
+            </div>
+        @empty
+            <p class="text-sm text-gray-400">No actions wired. Your app registers available actions in the ActionCatalog.</p>
+        @endforelse
+    </div>
+
     @push('scripts')
         <script src="https://cdn.jsdelivr.net/npm/drawflow@0.0.59/dist/drawflow.min.js"></script>
         <script>

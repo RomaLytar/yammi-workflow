@@ -6,6 +6,7 @@ namespace Yammi\Workflow\Filament\Pages;
 
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Yammi\Workflow\Application\Contract\ActionCatalog;
 use Yammi\Workflow\Domain\Workflow\Condition\ConditionOperator;
 use Yammi\Workflow\Infrastructure\Definition\WorkflowImporter;
 use Yammi\Workflow\Infrastructure\Designer\GraphToBlueprint;
@@ -42,6 +43,11 @@ class WorkflowDesigner extends Page
      */
     public array $conditions = [];
 
+    /**
+     * @var list<array{from: string, to: string, action: string}>
+     */
+    public array $actions = [];
+
     public function addRule(): void
     {
         $this->conditions[] = ['from' => '', 'to' => '', 'field' => '', 'operator' => 'eq', 'value' => ''];
@@ -53,12 +59,23 @@ class WorkflowDesigner extends Page
         $this->conditions = array_values($this->conditions);
     }
 
+    public function addAction(): void
+    {
+        $this->actions[] = ['from' => '', 'to' => '', 'action' => ''];
+    }
+
+    public function removeAction(int $index): void
+    {
+        unset($this->actions[$index]);
+        $this->actions = array_values($this->actions);
+    }
+
     public function save(): void
     {
         /** @var array{key: string, name?: string, nodes: list<array{id: string, key: string, initial?: bool}>, edges: list<array{from: string, to: string}>} $graph */
         $graph = $this->graph;
 
-        app(WorkflowImporter::class)->import(GraphToBlueprint::convert($graph, $this->conditionMap()));
+        app(WorkflowImporter::class)->import(GraphToBlueprint::convert($graph, $this->conditionMap(), $this->actionMap()));
 
         Notification::make()
             ->title('Workflow saved as a new version')
@@ -98,6 +115,20 @@ class WorkflowDesigner extends Page
     }
 
     /**
+     * @return array<string, string>
+     */
+    public function actionOptions(): array
+    {
+        $options = [];
+
+        foreach (app(ActionCatalog::class)->names() as $name) {
+            $options[$name] = $name;
+        }
+
+        return $options;
+    }
+
+    /**
      * @return array<string, list<array{field: string, operator: string, value: string}>>
      */
     private function conditionMap(): array
@@ -114,6 +145,24 @@ class WorkflowDesigner extends Page
                 'operator' => $rule['operator'],
                 'value' => (string) $rule['value'],
             ];
+        }
+
+        return $map;
+    }
+
+    /**
+     * @return array<string, list<string>>
+     */
+    private function actionMap(): array
+    {
+        $map = [];
+
+        foreach ($this->actions as $rule) {
+            if ($rule['from'] === '' || $rule['to'] === '' || $rule['action'] === '') {
+                continue;
+            }
+
+            $map["{$rule['from']}>{$rule['to']}"][] = $rule['action'];
         }
 
         return $map;

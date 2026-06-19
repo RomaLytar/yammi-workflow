@@ -9,6 +9,7 @@ use Yammi\Workflow\Infrastructure\Console\PruneHistoryCommand;
 use Yammi\Workflow\Infrastructure\Console\TickWorkflowsCommand;
 use Yammi\Workflow\Infrastructure\Console\WorkflowListCommand;
 use Yammi\Workflow\Infrastructure\Console\WorkflowShowCommand;
+use Yammi\Workflow\Infrastructure\Provider\ActionBindings;
 use Yammi\Workflow\Infrastructure\Provider\ApprovalBindings;
 use Yammi\Workflow\Infrastructure\Provider\AuthorizationBindings;
 use Yammi\Workflow\Infrastructure\Provider\DefinitionBindings;
@@ -41,6 +42,7 @@ final class WorkflowServiceProvider extends ServiceProvider
         (new AuthorizationBindings($this->app))->register();
         (new TimerBindings($this->app))->register();
         (new ApprovalBindings($this->app))->register();
+        (new ActionBindings($this->app))->register();
         (new TenancyBindings($this->app))->register();
     }
 
