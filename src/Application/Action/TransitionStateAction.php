@@ -8,6 +8,7 @@ use Yammi\Workflow\Application\Contract\ActorResolver;
 use Yammi\Workflow\Application\Contract\GuardRegistry;
 use Yammi\Workflow\Application\Contract\HookRegistry;
 use Yammi\Workflow\Application\Contract\StateStore;
+use Yammi\Workflow\Application\Contract\TransitionActionRunner;
 use Yammi\Workflow\Application\Contract\TransitionAuthorizer;
 use Yammi\Workflow\Application\Contract\TransitionConditionChecker;
 use Yammi\Workflow\Application\Contract\TransitionRecorder;
@@ -32,6 +33,7 @@ final class TransitionStateAction
         private readonly HookRegistry $hooks,
         private readonly TransitionAuthorizer $authorizer,
         private readonly TransitionConditionChecker $conditions,
+        private readonly TransitionActionRunner $actions,
     ) {}
 
     /**
@@ -63,6 +65,7 @@ final class TransitionStateAction
         $this->recorder->record($subject, $resolved->workflowId, $current, $next, $actor, $reason, $meta);
         $this->events->dispatch(new WorkflowTransitioned($subject, $key, $current->name, $next->name, $actor, $reason, $meta));
         $this->hooks->run($key, $subject, $current->name, $next->name);
+        $this->actions->run($resolved->workflowId, $current->name, $next->name, $subject);
 
         return new TransitionResultData($key, $current->name, $next->name);
     }
