@@ -6,7 +6,9 @@ namespace Yammi\Workflow\Infrastructure\Provider;
 
 use Illuminate\Contracts\Foundation\Application;
 use Yammi\Workflow\Application\Contract\StateStore;
+use Yammi\Workflow\Application\Contract\TransitionConditionChecker;
 use Yammi\Workflow\Application\Contract\WorkflowKeyResolver;
+use Yammi\Workflow\Infrastructure\Persistence\Condition\EloquentConditionChecker;
 use Yammi\Workflow\Infrastructure\Resolver\ConfigWorkflowKeyResolver;
 use Yammi\Workflow\Infrastructure\StateStore\ColumnStateStore;
 use Yammi\Workflow\Infrastructure\StateStore\InstanceStateStore;
@@ -38,5 +40,7 @@ final class RuntimeBindings
 
             return $app->make(InstanceStateStore::class);
         });
+
+        $this->app->bind(TransitionConditionChecker::class, EloquentConditionChecker::class);
     }
 }

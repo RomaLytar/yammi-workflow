@@ -20,9 +20,50 @@
         <div
             x-ref="canvas"
             class="fi-wo-canvas"
-            style="height: 60vh; border: 1px solid rgb(229 231 235); border-radius: 0.75rem; background:
+            style="height: 50vh; border: 1px solid rgb(229 231 235); border-radius: 0.75rem; background:
                 radial-gradient(rgb(229 231 235) 1px, transparent 1px); background-size: 18px 18px;"
         ></div>
+    </div>
+
+    <div class="mt-6 space-y-3">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-base font-semibold text-gray-950 dark:text-white">Conditions (no-code rules)</h3>
+                <p class="text-sm text-gray-500">A transition is allowed only when its rules pass — set here, no code.</p>
+            </div>
+            <x-filament::button size="sm" color="gray" wire:click="addRule" icon="heroicon-o-plus">
+                Add rule
+            </x-filament::button>
+        </div>
+
+        @forelse ($conditions as $i => $rule)
+            <div class="flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 p-2 dark:border-gray-700">
+                <select wire:model="conditions.{{ $i }}.from" class="rounded-md border-gray-300 text-sm dark:bg-gray-800">
+                    <option value="">from…</option>
+                    @foreach ($this->stateOptions() as $value => $label)
+                        <option value="{{ $value }}">{{ $label }}</option>
+                    @endforeach
+                </select>
+                <span class="text-gray-400">&rarr;</span>
+                <select wire:model="conditions.{{ $i }}.to" class="rounded-md border-gray-300 text-sm dark:bg-gray-800">
+                    <option value="">to…</option>
+                    @foreach ($this->stateOptions() as $value => $label)
+                        <option value="{{ $value }}">{{ $label }}</option>
+                    @endforeach
+                </select>
+                <span class="text-sm text-gray-500">allowed if</span>
+                <input wire:model="conditions.{{ $i }}.field" placeholder="field (e.g. amount)" class="rounded-md border-gray-300 text-sm dark:bg-gray-800">
+                <select wire:model="conditions.{{ $i }}.operator" class="rounded-md border-gray-300 text-sm dark:bg-gray-800">
+                    @foreach ($this->operatorOptions() as $value => $label)
+                        <option value="{{ $value }}">{{ $label }}</option>
+                    @endforeach
+                </select>
+                <input wire:model="conditions.{{ $i }}.value" placeholder="value" class="rounded-md border-gray-300 text-sm dark:bg-gray-800">
+                <button type="button" wire:click="removeRule({{ $i }})" class="text-danger-600 hover:text-danger-500">&times;</button>
+            </div>
+        @empty
+            <p class="text-sm text-gray-400">No rules yet — every declared transition is allowed.</p>
+        @endforelse
     </div>
 
     @push('scripts')

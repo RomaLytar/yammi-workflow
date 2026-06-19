@@ -9,6 +9,7 @@ use Yammi\Workflow\Application\Contract\GuardRegistry;
 use Yammi\Workflow\Application\Contract\HookRegistry;
 use Yammi\Workflow\Application\Contract\StateStore;
 use Yammi\Workflow\Application\Contract\TransitionAuthorizer;
+use Yammi\Workflow\Application\Contract\TransitionConditionChecker;
 use Yammi\Workflow\Application\Contract\TransitionRecorder;
 use Yammi\Workflow\Application\Contract\WorkflowEventDispatcher;
 use Yammi\Workflow\Application\DTO\TransitionResultData;
@@ -30,6 +31,7 @@ final class TransitionStateAction
         private readonly GuardRegistry $guards,
         private readonly HookRegistry $hooks,
         private readonly TransitionAuthorizer $authorizer,
+        private readonly TransitionConditionChecker $conditions,
     ) {}
 
     /**
@@ -44,6 +46,10 @@ final class TransitionStateAction
         $next = (new StateMachine($resolved->definition))->transition($current, new State($to));
 
         if (! $this->guards->allows($key, $subject, $current->name, $next->name)) {
+            throw TransitionBlockedException::forTransition($key, $current, $next);
+        }
+
+        if (! $this->conditions->satisfied($resolved->workflowId, $current->name, $next->name, $subject)) {
             throw TransitionBlockedException::forTransition($key, $current, $next);
         }
 
