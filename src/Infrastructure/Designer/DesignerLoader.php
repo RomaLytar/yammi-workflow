@@ -7,13 +7,16 @@ namespace Yammi\Workflow\Infrastructure\Designer;
 use Yammi\Workflow\Infrastructure\Persistence\Eloquent\WorkflowModel;
 
 /**
- * Loads a workflow's current version back into the visual designer's shape.
+ * Loads a workflow's current version into the visual designer form shape.
  */
 final class DesignerLoader
 {
     /**
      * @return array{
-     *     graph: array{key: string, name: string, nodes: list<array{id: string, key: string, initial: bool}>, edges: list<array{from: string, to: string}>},
+     *     key: string,
+     *     name: string,
+     *     states: list<array{key: string, initial: bool}>,
+     *     transitions: list<array{from: string, to: string}>,
      *     conditions: list<array{from: string, to: string, field: string, operator: string, value: string}>,
      *     actions: list<array{from: string, to: string, action: string}>,
      *     approvals: list<array{from: string, to: string, steps: string}>
@@ -28,7 +31,10 @@ final class DesignerLoader
 
         if ($workflow === null) {
             return [
-                'graph' => ['key' => $key, 'name' => $key, 'nodes' => [], 'edges' => []],
+                'key' => $key,
+                'name' => $key,
+                'states' => [],
+                'transitions' => [],
                 'conditions' => [],
                 'actions' => [],
                 'approvals' => [],
@@ -36,14 +42,14 @@ final class DesignerLoader
         }
 
         $keyByStateId = [];
-        $nodes = [];
+        $states = [];
 
         foreach ($workflow->states()->orderBy('sort')->get() as $state) {
-            $nodes[] = ['id' => 's'.$state->id, 'key' => $state->key, 'initial' => $state->is_initial];
+            $states[] = ['key' => $state->key, 'initial' => $state->is_initial];
             $keyByStateId[$state->id] = $state->key;
         }
 
-        $edges = [];
+        $transitions = [];
         $conditions = [];
         $actions = [];
         $approvals = [];
@@ -52,7 +58,7 @@ final class DesignerLoader
             $from = $keyByStateId[$def->from_state_id] ?? '';
             $to = $keyByStateId[$def->to_state_id] ?? '';
 
-            $edges[] = ['from' => 's'.$def->from_state_id, 'to' => 's'.$def->to_state_id];
+            $transitions[] = ['from' => $from, 'to' => $to];
 
             foreach ($def->conditions ?? [] as $rule) {
                 $conditions[] = [
@@ -74,7 +80,10 @@ final class DesignerLoader
         }
 
         return [
-            'graph' => ['key' => $workflow->key, 'name' => $workflow->name, 'nodes' => $nodes, 'edges' => $edges],
+            'key' => $workflow->key,
+            'name' => $workflow->name,
+            'states' => $states,
+            'transitions' => $transitions,
             'conditions' => $conditions,
             'actions' => $actions,
             'approvals' => $approvals,

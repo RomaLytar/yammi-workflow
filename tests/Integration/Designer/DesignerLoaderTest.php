@@ -14,7 +14,7 @@ final class DesignerLoaderTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_it_loads_a_workflow_into_the_designer_shape(): void
+    public function test_it_loads_a_workflow_into_the_form_shape(): void
     {
         $this->app->make(WorkflowImporter::class)->import(WorkflowBlueprintData::fromArray([
             'key' => 'invoice',
@@ -29,10 +29,16 @@ final class DesignerLoaderTest extends TestCase
 
         $data = $this->app->make(DesignerLoader::class)->load('invoice');
 
-        $this->assertSame(['draft', 'pending', 'approved'], array_column($data['graph']['nodes'], 'key'));
-        $this->assertCount(2, $data['graph']['edges']);
-        $this->assertTrue($data['graph']['nodes'][0]['initial']);
-
+        $this->assertSame('invoice', $data['key']);
+        $this->assertSame([
+            ['key' => 'draft', 'initial' => true],
+            ['key' => 'pending', 'initial' => false],
+            ['key' => 'approved', 'initial' => false],
+        ], $data['states']);
+        $this->assertSame([
+            ['from' => 'draft', 'to' => 'pending'],
+            ['from' => 'pending', 'to' => 'approved'],
+        ], $data['transitions']);
         $this->assertSame(
             [['from' => 'draft', 'to' => 'pending', 'field' => 'amount', 'operator' => 'gte', 'value' => '1000']],
             $data['conditions'],
@@ -45,7 +51,7 @@ final class DesignerLoaderTest extends TestCase
     {
         $data = $this->app->make(DesignerLoader::class)->load('ghost');
 
-        $this->assertSame([], $data['graph']['nodes']);
-        $this->assertSame([], $data['conditions']);
+        $this->assertSame([], $data['states']);
+        $this->assertSame([], $data['transitions']);
     }
 }
