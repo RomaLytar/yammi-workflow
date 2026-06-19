@@ -15,8 +15,9 @@ final class GraphToBlueprint
      * @param  array{key: string, name?: string, nodes: list<array{id: string, key: string, initial?: bool}>, edges: list<array{from: string, to: string}>}  $graph
      * @param  array<string, list<array{field: string, operator: string, value: string}>>  $conditions  keyed by "from>to"
      * @param  array<string, list<string>>  $actions  action names keyed by "from>to"
+     * @param  array<string, list<string>>  $approval  approval step labels keyed by "from>to"
      */
-    public static function convert(array $graph, array $conditions = [], array $actions = []): WorkflowBlueprintData
+    public static function convert(array $graph, array $conditions = [], array $actions = [], array $approval = []): WorkflowBlueprintData
     {
         $idToKey = [];
         $states = [];
@@ -49,6 +50,7 @@ final class GraphToBlueprint
             $initial ?? ($states[0] ?? ''),
             $conditions,
             $actions,
+            $approval,
         );
     }
 }

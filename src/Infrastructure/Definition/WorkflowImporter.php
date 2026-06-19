@@ -67,6 +67,7 @@ final class WorkflowImporter
                 foreach ($targets as $to) {
                     $conditions = $blueprint->conditions["{$from}>{$to}"] ?? [];
                     $actions = $blueprint->actions["{$from}>{$to}"] ?? [];
+                    $approval = $blueprint->approval["{$from}>{$to}"] ?? [];
 
                     WorkflowTransitionDefModel::create([
                         'workflow_id' => $workflow->id,
@@ -74,6 +75,7 @@ final class WorkflowImporter
                         'to_state_id' => $stateIds[$to],
                         'conditions' => $conditions === [] ? null : $conditions,
                         'actions' => $actions === [] ? null : $actions,
+                        'approval' => $approval === [] ? null : $approval,
                     ]);
                 }
             }

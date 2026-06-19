@@ -11,6 +11,7 @@ final class WorkflowBlueprintData
      * @param  array<string, list<string>>  $transitions
      * @param  array<string, list<array{field: string, operator: string, value: string}>>  $conditions  keyed by "from>to"
      * @param  array<string, list<string>>  $actions  action names keyed by "from>to"
+     * @param  array<string, list<string>>  $approval  approval step labels keyed by "from>to"
      */
     public function __construct(
         public readonly string $key,
@@ -20,10 +21,11 @@ final class WorkflowBlueprintData
         public readonly string $initial,
         public readonly array $conditions = [],
         public readonly array $actions = [],
+        public readonly array $approval = [],
     ) {}
 
     /**
-     * @param  array{key: string, name?: string, states: list<string>, transitions?: array<string, list<string>>, initial?: string, conditions?: array<string, list<array{field: string, operator: string, value: string}>>, actions?: array<string, list<string>>}  $spec
+     * @param  array{key: string, name?: string, states: list<string>, transitions?: array<string, list<string>>, initial?: string, conditions?: array<string, list<array{field: string, operator: string, value: string}>>, actions?: array<string, list<string>>, approval?: array<string, list<string>>}  $spec
      */
     public static function fromArray(array $spec): self
     {
@@ -37,6 +39,7 @@ final class WorkflowBlueprintData
             $spec['initial'] ?? ($states[0] ?? ''),
             $spec['conditions'] ?? [],
             $spec['actions'] ?? [],
+            $spec['approval'] ?? [],
         );
     }
 }

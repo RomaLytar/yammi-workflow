@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $to_state_id
  * @property array<int, array{field: string, operator: string, value: string}>|null $conditions
  * @property list<string>|null $actions
+ * @property list<string>|null $approval
  *
  * @internal
  */
@@ -20,7 +21,7 @@ final class WorkflowTransitionDefModel extends Model
 {
     public $timestamps = false;
 
-    protected $fillable = ['workflow_id', 'from_state_id', 'to_state_id', 'conditions', 'actions'];
+    protected $fillable = ['workflow_id', 'from_state_id', 'to_state_id', 'conditions', 'actions', 'approval'];
 
     protected $casts = [
         'workflow_id' => 'integer',
@@ -28,6 +29,7 @@ final class WorkflowTransitionDefModel extends Model
         'to_state_id' => 'integer',
         'conditions' => 'array',
         'actions' => 'array',
+        'approval' => 'array',
     ];
 
     public function getTable(): string

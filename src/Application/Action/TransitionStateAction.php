@@ -9,6 +9,7 @@ use Yammi\Workflow\Application\Contract\GuardRegistry;
 use Yammi\Workflow\Application\Contract\HookRegistry;
 use Yammi\Workflow\Application\Contract\StateStore;
 use Yammi\Workflow\Application\Contract\TransitionActionRunner;
+use Yammi\Workflow\Application\Contract\TransitionApprovalGate;
 use Yammi\Workflow\Application\Contract\TransitionAuthorizer;
 use Yammi\Workflow\Application\Contract\TransitionConditionChecker;
 use Yammi\Workflow\Application\Contract\TransitionRecorder;
@@ -34,6 +35,7 @@ final class TransitionStateAction
         private readonly TransitionAuthorizer $authorizer,
         private readonly TransitionConditionChecker $conditions,
         private readonly TransitionActionRunner $actions,
+        private readonly TransitionApprovalGate $approvalGate,
     ) {}
 
     /**
@@ -58,6 +60,8 @@ final class TransitionStateAction
         if (! $this->authorizer->allows($subject, $current->name, $next->name)) {
             throw UnauthorizedTransitionException::forTransition($key, $current, $next);
         }
+
+        $this->approvalGate->check($resolved->workflowId, $current->name, $next->name, $subject);
 
         $this->states->put($subject, $next, $resolved->workflowId);
 
