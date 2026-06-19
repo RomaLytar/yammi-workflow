@@ -6,14 +6,15 @@ namespace Yammi\Workflow\Application\Contract;
 
 use Yammi\Workflow\Application\DTO\ActorData;
 use Yammi\Workflow\Application\DTO\ApprovalStepData;
+use Yammi\Workflow\Application\DTO\ApprovalStepInput;
 use Yammi\Workflow\Domain\Approval\Enum\ApprovalStatus;
 
 interface ApprovalStore
 {
     /**
-     * @param  list<string>  $labels
+     * @param  list<ApprovalStepInput>  $steps
      */
-    public function replace(object $subject, array $labels): void;
+    public function replace(object $subject, array $steps): void;
 
     /**
      * @return list<ApprovalStepData>

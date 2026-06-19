@@ -6,6 +6,7 @@ namespace Yammi\Workflow\Infrastructure\Persistence\Approval;
 
 use Yammi\Workflow\Application\Contract\ApprovalStore;
 use Yammi\Workflow\Application\Contract\TransitionApprovalGate;
+use Yammi\Workflow\Application\DTO\ApprovalStepInput;
 use Yammi\Workflow\Application\DTO\ApprovalSummaryData;
 use Yammi\Workflow\Domain\Approval\Exception\ApprovalRequiredException;
 use Yammi\Workflow\Infrastructure\Persistence\Support\TransitionDefLocator;
@@ -34,7 +35,10 @@ final class EloquentApprovalGate implements TransitionApprovalGate
         }
 
         if ($summary->steps === []) {
-            $this->approvals->replace($subject, $steps);
+            $this->approvals->replace(
+                $subject,
+                array_map(static fn (string $label): ApprovalStepInput => new ApprovalStepInput($label), $steps),
+            );
         }
 
         throw ApprovalRequiredException::forTransition($from, $to);
