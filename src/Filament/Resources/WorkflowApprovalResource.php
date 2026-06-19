@@ -8,7 +8,9 @@ use Filament\Forms\Components\Textarea;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Yammi\Workflow\Domain\Approval\Enum\ApprovalStatus;
 use Yammi\Workflow\Facade\Approval;
 use Yammi\Workflow\Filament\Resources\WorkflowApprovalResource\Pages\ListWorkflowApprovals;
@@ -36,7 +38,13 @@ class WorkflowApprovalResource extends Resource
                     ->weight('bold')
                     ->state(static fn (WorkflowApprovalModel $record): string => SubjectPresenter::title($record->subject_type, $record->subject_id)),
                 TextColumn::make('step')->label('Step')->sortable(),
-                TextColumn::make('label')->label('Approver'),
+                TextColumn::make('label')->label('Role'),
+                TextColumn::make('assignee')
+                    ->label('Assignee')
+                    ->placeholder('—')
+                    ->state(static fn (WorkflowApprovalModel $record): ?string => $record->assignee_type !== null && $record->assignee_id !== null
+                        ? SubjectPresenter::title($record->assignee_type, $record->assignee_id)
+                        : null),
                 TextColumn::make('status')
                     ->badge()
                     ->formatStateUsing(static fn (ApprovalStatus $state): string => ucfirst(strtolower($state->name)))
@@ -47,6 +55,17 @@ class WorkflowApprovalResource extends Resource
                     }),
                 TextColumn::make('comment')->limit(40)->placeholder('-'),
                 TextColumn::make('decided_at')->dateTime()->since()->placeholder('-'),
+            ])
+            ->filters([
+                Filter::make('mine')
+                    ->label('Assigned to me')
+                    ->query(static function (Builder $query): Builder {
+                        $user = auth()->user();
+
+                        return $user === null
+                            ? $query
+                            : $query->where('assignee_type', $user::class)->where('assignee_id', (string) $user->getAuthIdentifier());
+                    }),
             ])
             ->actions([
                 Action::make('approve')
