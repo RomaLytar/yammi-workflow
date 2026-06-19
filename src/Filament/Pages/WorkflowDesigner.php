@@ -48,6 +48,11 @@ class WorkflowDesigner extends Page
      */
     public array $actions = [];
 
+    /**
+     * @var list<array{from: string, to: string, steps: string}>
+     */
+    public array $approvals = [];
+
     public function addRule(): void
     {
         $this->conditions[] = ['from' => '', 'to' => '', 'field' => '', 'operator' => 'eq', 'value' => ''];
@@ -70,12 +75,23 @@ class WorkflowDesigner extends Page
         $this->actions = array_values($this->actions);
     }
 
+    public function addApproval(): void
+    {
+        $this->approvals[] = ['from' => '', 'to' => '', 'steps' => ''];
+    }
+
+    public function removeApproval(int $index): void
+    {
+        unset($this->approvals[$index]);
+        $this->approvals = array_values($this->approvals);
+    }
+
     public function save(): void
     {
         /** @var array{key: string, name?: string, nodes: list<array{id: string, key: string, initial?: bool}>, edges: list<array{from: string, to: string}>} $graph */
         $graph = $this->graph;
 
-        app(WorkflowImporter::class)->import(GraphToBlueprint::convert($graph, $this->conditionMap(), $this->actionMap()));
+        app(WorkflowImporter::class)->import(GraphToBlueprint::convert($graph, $this->conditionMap(), $this->actionMap(), $this->approvalMap()));
 
         Notification::make()
             ->title('Workflow saved as a new version')
@@ -163,6 +179,28 @@ class WorkflowDesigner extends Page
             }
 
             $map["{$rule['from']}>{$rule['to']}"][] = $rule['action'];
+        }
+
+        return $map;
+    }
+
+    /**
+     * @return array<string, list<string>>
+     */
+    private function approvalMap(): array
+    {
+        $map = [];
+
+        foreach ($this->approvals as $rule) {
+            if ($rule['from'] === '' || $rule['to'] === '' || trim($rule['steps']) === '') {
+                continue;
+            }
+
+            $steps = array_values(array_filter(array_map('trim', explode(',', $rule['steps']))));
+
+            if ($steps !== []) {
+                $map["{$rule['from']}>{$rule['to']}"] = $steps;
+            }
         }
 
         return $map;

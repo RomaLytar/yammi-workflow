@@ -106,6 +106,41 @@
         @endforelse
     </div>
 
+    <div class="mt-6 space-y-3">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-base font-semibold text-gray-950 dark:text-white">Approvals (sign-off on transition)</h3>
+                <p class="text-sm text-gray-500">Require ordered sign-off before a transition — set the steps, no code.</p>
+            </div>
+            <x-filament::button size="sm" color="gray" wire:click="addApproval" icon="heroicon-o-plus">
+                Add approval
+            </x-filament::button>
+        </div>
+
+        @forelse ($approvals as $i => $rule)
+            <div class="flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 p-2 dark:border-gray-700">
+                <select wire:model="approvals.{{ $i }}.from" class="rounded-md border-gray-300 text-sm dark:bg-gray-800">
+                    <option value="">from…</option>
+                    @foreach ($this->stateOptions() as $value => $label)
+                        <option value="{{ $value }}">{{ $label }}</option>
+                    @endforeach
+                </select>
+                <span class="text-gray-400">&rarr;</span>
+                <select wire:model="approvals.{{ $i }}.to" class="rounded-md border-gray-300 text-sm dark:bg-gray-800">
+                    <option value="">to…</option>
+                    @foreach ($this->stateOptions() as $value => $label)
+                        <option value="{{ $value }}">{{ $label }}</option>
+                    @endforeach
+                </select>
+                <span class="text-sm text-gray-500">needs sign-off</span>
+                <input wire:model="approvals.{{ $i }}.steps" placeholder="manager, finance, ceo" class="grow rounded-md border-gray-300 text-sm dark:bg-gray-800">
+                <button type="button" wire:click="removeApproval({{ $i }})" class="text-danger-600 hover:text-danger-500">&times;</button>
+            </div>
+        @empty
+            <p class="text-sm text-gray-400">No approvals required.</p>
+        @endforelse
+    </div>
+
     @push('scripts')
         <script src="https://cdn.jsdelivr.net/npm/drawflow@0.0.59/dist/drawflow.min.js"></script>
         <script>

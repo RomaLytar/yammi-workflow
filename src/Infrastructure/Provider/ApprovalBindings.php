@@ -6,7 +6,9 @@ namespace Yammi\Workflow\Infrastructure\Provider;
 
 use Illuminate\Contracts\Foundation\Application;
 use Yammi\Workflow\Application\Contract\ApprovalStore;
+use Yammi\Workflow\Application\Contract\TransitionApprovalGate;
 use Yammi\Workflow\Infrastructure\Api\ApprovalManager;
+use Yammi\Workflow\Infrastructure\Persistence\Approval\EloquentApprovalGate;
 use Yammi\Workflow\Infrastructure\Persistence\Approval\EloquentApprovalStore;
 
 /**
@@ -21,6 +23,7 @@ final class ApprovalBindings
     public function register(): void
     {
         $this->app->bind(ApprovalStore::class, EloquentApprovalStore::class);
+        $this->app->bind(TransitionApprovalGate::class, EloquentApprovalGate::class);
         $this->app->singleton(ApprovalManager::class);
     }
 }
