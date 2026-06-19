@@ -13,6 +13,7 @@ use Yammi\Workflow\Application\Contract\WorkflowMetricsQuery;
 use Yammi\Workflow\Application\DTO\TransitionRecordData;
 use Yammi\Workflow\Application\DTO\TransitionResultData;
 use Yammi\Workflow\Application\DTO\WorkflowSnapshotData;
+use Yammi\Workflow\Application\Service\WorkflowDiagram;
 use Yammi\Workflow\Domain\Workflow\ValueObject\State;
 
 final class WorkflowManager
@@ -24,6 +25,7 @@ final class WorkflowManager
         private readonly AllowedTransitionsAction $allowed,
         private readonly TransitionHistory $history,
         private readonly WorkflowMetricsQuery $metrics,
+        private readonly WorkflowDiagram $diagrams,
     ) {}
 
     public function for(object $subject): WorkflowSnapshotData
@@ -69,5 +71,10 @@ final class WorkflowManager
     public function metrics(string $workflow): array
     {
         return $this->metrics->stateDistribution($workflow);
+    }
+
+    public function diagram(string $workflow): string
+    {
+        return $this->diagrams->mermaid($workflow);
     }
 }
