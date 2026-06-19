@@ -26,6 +26,8 @@ final class WorkflowServiceProvider extends ServiceProvider
 
     private const MIGRATIONS_PATH = __DIR__.'/../database/migrations';
 
+    private const VIEWS_PATH = __DIR__.'/../resources/views';
+
     public function register(): void
     {
         $this->mergeConfigFrom(self::CONFIG_PATH, 'workflow');
@@ -45,6 +47,7 @@ final class WorkflowServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(self::MIGRATIONS_PATH);
+        $this->loadViewsFrom(self::VIEWS_PATH, 'workflow');
 
         (new TenancyBindings($this->app))->boot();
 

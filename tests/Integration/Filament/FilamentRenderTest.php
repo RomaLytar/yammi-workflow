@@ -23,6 +23,7 @@ use Livewire\LivewireServiceProvider;
 use RyanChandler\BladeCaptureDirective\BladeCaptureDirectiveServiceProvider;
 use Yammi\Workflow\Application\DTO\WorkflowBlueprintData;
 use Yammi\Workflow\Facade\Approval;
+use Yammi\Workflow\Filament\Pages\WorkflowDesigner;
 use Yammi\Workflow\Filament\Resources\WorkflowApprovalResource\Pages\ListWorkflowApprovals;
 use Yammi\Workflow\Filament\Resources\WorkflowInstanceResource\Pages\ListWorkflowInstances;
 use Yammi\Workflow\Infrastructure\Definition\WorkflowImporter;
@@ -105,5 +106,17 @@ final class FilamentRenderTest extends TestCase
         Approval::request($invoice, ['manager', 'finance']);
 
         Livewire::test(ListWorkflowApprovals::class)->assertOk();
+    }
+
+    public function test_the_designer_page_renders(): void
+    {
+        Livewire::test(WorkflowDesigner::class)->assertOk();
+    }
+
+    public function test_the_designer_saves_a_new_version(): void
+    {
+        Livewire::test(WorkflowDesigner::class)->call('save');
+
+        $this->assertDatabaseHas('workflows', ['key' => 'invoice', 'version' => 2, 'is_current' => true]);
     }
 }

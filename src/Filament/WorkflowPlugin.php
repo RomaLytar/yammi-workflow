@@ -6,6 +6,7 @@ namespace Yammi\Workflow\Filament;
 
 use Filament\Contracts\Plugin;
 use Filament\Panel;
+use Yammi\Workflow\Filament\Pages\WorkflowDesigner;
 use Yammi\Workflow\Filament\Resources\WorkflowApprovalResource;
 use Yammi\Workflow\Filament\Resources\WorkflowInstanceResource;
 use Yammi\Workflow\Filament\Widgets\StateDistributionWidget;
@@ -22,6 +23,10 @@ final class WorkflowPlugin implements Plugin
         $panel->resources([
             WorkflowInstanceResource::class,
             WorkflowApprovalResource::class,
+        ]);
+
+        $panel->pages([
+            WorkflowDesigner::class,
         ]);
 
         $panel->widgets([
