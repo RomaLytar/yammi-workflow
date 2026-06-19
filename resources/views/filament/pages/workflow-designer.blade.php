@@ -8,6 +8,18 @@
         .dark .drawflow .drawflow-node { background: #1f2937; border-color: #374151; }
     </style>
 
+    <div class="mb-3 flex flex-wrap items-center gap-2">
+        <select wire:model="workflowKey" class="rounded-md border-gray-300 text-sm dark:bg-gray-800">
+            <option value="">Start a new workflow…</option>
+            @foreach ($this->workflowOptions() as $value => $label)
+                <option value="{{ $value }}">{{ $label }}</option>
+            @endforeach
+        </select>
+        <x-filament::button size="sm" color="gray" wire:click="load" icon="heroicon-o-arrow-down-tray">
+            Load for editing
+        </x-filament::button>
+    </div>
+
     <div
         wire:ignore
         x-data="workflowDesigner(@js($graph))"
@@ -184,10 +196,30 @@
                         this.editor.reroute = true;
                         this.editor.start();
 
+                        this.editor.on('nodeRemoved', () => this.updateHint());
+                        this.editor.on('connectionCreated', () => this.updateHint());
+                        this.editor.on('connectionRemoved', () => this.updateHint());
+
+                        this.importGraph(this.graph);
+
+                        this.$wire.on('workflow-loaded', async () => {
+                            const fresh = await this.$wire.get('graph');
+                            this.importGraph(fresh);
+                        });
+                    },
+
+                    importGraph(graph) {
+                        if (! this.editor) {
+                            return;
+                        }
+                        this.editor.clear();
+                        this.graph = graph;
+                        this.initialKey = (graph.nodes.find(n => n.initial) || graph.nodes[0] || {}).key || '';
+
                         const drawId = {};
                         let x = 60;
 
-                        this.graph.nodes.forEach((node, index) => {
+                        graph.nodes.forEach((node, index) => {
                             const id = this.editor.addNode(
                                 node.key, 1, 1, x, 70 + (index % 2) * 130, 'wf-node',
                                 { key: node.key }, this.nodeHtml(),
@@ -196,16 +228,13 @@
                             x += 190;
                         });
 
-                        this.graph.edges.forEach((edge) => {
+                        graph.edges.forEach((edge) => {
                             if (drawId[edge.from] && drawId[edge.to]) {
                                 this.editor.addConnection(drawId[edge.from], drawId[edge.to], 'output_1', 'input_1');
                             }
                         });
 
                         this.updateHint();
-                        this.editor.on('nodeRemoved', () => this.updateHint());
-                        this.editor.on('connectionCreated', () => this.updateHint());
-                        this.editor.on('connectionRemoved', () => this.updateHint());
                     },
 
                     addState() {
