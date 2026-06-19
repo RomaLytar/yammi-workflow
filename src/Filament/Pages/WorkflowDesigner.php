@@ -9,7 +9,6 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
@@ -35,65 +34,36 @@ class WorkflowDesigner extends Page implements HasForms
     protected static string $view = 'workflow::filament.pages.workflow-designer';
 
     /**
+     * @var array<string, mixed>
+     */
+    public array $graph = [
+        'key' => 'invoice',
+        'name' => 'Invoice approval',
+        'nodes' => [
+            ['id' => 'n1', 'key' => 'draft', 'initial' => true],
+            ['id' => 'n2', 'key' => 'pending', 'initial' => false],
+            ['id' => 'n3', 'key' => 'approved', 'initial' => false],
+        ],
+        'edges' => [
+            ['from' => 'n1', 'to' => 'n2'],
+            ['from' => 'n2', 'to' => 'n3'],
+        ],
+    ];
+
+    /**
      * @var array<string, mixed>|null
      */
     public ?array $data = [];
 
     public function mount(): void
     {
-        $this->form->fill([
-            'key' => 'invoice',
-            'name' => 'Invoice approval',
-            'states' => [
-                ['key' => 'draft', 'initial' => true],
-                ['key' => 'pending', 'initial' => false],
-                ['key' => 'approved', 'initial' => false],
-            ],
-            'transitions' => [
-                ['from' => 'draft', 'to' => 'pending'],
-                ['from' => 'pending', 'to' => 'approved'],
-            ],
-        ]);
+        $this->form->fill(['conditions' => [], 'actions' => [], 'approvals' => []]);
     }
 
     public function form(Form $form): Form
     {
         return $form
             ->schema([
-                Section::make('Workflow')
-                    ->description('A unique key and a human name for this process.')
-                    ->columns(2)
-                    ->schema([
-                        TextInput::make('key')->required()->helperText('Lower-case id, e.g. invoice'),
-                        TextInput::make('name')->required(),
-                    ]),
-
-                Section::make('States')
-                    ->description('The steps a record moves through. Mark exactly one as initial.')
-                    ->schema([
-                        Repeater::make('states')
-                            ->hiddenLabel()
-                            ->columns(2)
-                            ->addActionLabel('Add state')
-                            ->schema([
-                                TextInput::make('key')->label('State')->placeholder('draft')->required()->live(onBlur: true),
-                                Toggle::make('initial')->label('Initial state'),
-                            ]),
-                    ]),
-
-                Section::make('Transitions')
-                    ->description('Allowed moves between states. Anything not listed is blocked.')
-                    ->schema([
-                        Repeater::make('transitions')
-                            ->hiddenLabel()
-                            ->columns(2)
-                            ->addActionLabel('Add transition')
-                            ->schema([
-                                Select::make('from')->label('From')->options(fn (): array => $this->stateOptions())->required()->searchable(),
-                                Select::make('to')->label('To')->options(fn (): array => $this->stateOptions())->required()->searchable(),
-                            ]),
-                    ]),
-
                 Section::make('Conditions')
                     ->description('A transition is allowed only when its rules pass — no code.')
                     ->collapsible()
@@ -158,54 +128,95 @@ class WorkflowDesigner extends Page implements HasForms
                     Select::make('key')->label('Workflow')->options(fn (): array => $this->workflowOptions())->required(),
                 ])
                 ->action(function (array $data): void {
-                    $this->form->fill(app(DesignerLoader::class)->load((string) $data['key']));
+                    $loaded = app(DesignerLoader::class)->load((string) $data['key']);
+
+                    $this->graph = $this->toGraph($loaded);
+                    $this->form->fill([
+                        'conditions' => $loaded['conditions'],
+                        'actions' => $loaded['actions'],
+                        'approvals' => $loaded['approvals'],
+                    ]);
+
+                    $this->dispatch('graph-loaded');
                 }),
         ];
     }
 
     public function save(): void
     {
-        /** @var array<string, mixed> $data */
-        $data = $this->form->getState();
+        /** @var array<string, mixed> $rules */
+        $rules = $this->form->getState();
 
-        app(WorkflowImporter::class)->import($this->toBlueprint($data));
+        app(WorkflowImporter::class)->import($this->toBlueprint($this->graph, $rules));
 
         Notification::make()->title('Workflow saved as a new version')->success()->send();
     }
 
     /**
-     * @param  array<string, mixed>  $data
+     * @param  array{key: string, name: string, states: list<array{key: string, initial: bool}>, transitions: list<array{from: string, to: string}>}  $loaded
+     * @return array<string, mixed>
      */
-    private function toBlueprint(array $data): WorkflowBlueprintData
+    private function toGraph(array $loaded): array
+    {
+        $nodes = [];
+        $idByKey = [];
+
+        foreach ($loaded['states'] as $i => $state) {
+            $id = 'n'.($i + 1);
+            $nodes[] = ['id' => $id, 'key' => $state['key'], 'initial' => $state['initial']];
+            $idByKey[$state['key']] = $id;
+        }
+
+        $edges = [];
+
+        foreach ($loaded['transitions'] as $transition) {
+            if (isset($idByKey[$transition['from']], $idByKey[$transition['to']])) {
+                $edges[] = ['from' => $idByKey[$transition['from']], 'to' => $idByKey[$transition['to']]];
+            }
+        }
+
+        return ['key' => $loaded['key'], 'name' => $loaded['name'], 'nodes' => $nodes, 'edges' => $edges];
+    }
+
+    /**
+     * @param  array<string, mixed>  $graph
+     * @param  array<string, mixed>  $rules
+     */
+    private function toBlueprint(array $graph, array $rules): WorkflowBlueprintData
     {
         $states = [];
         $initial = '';
+        $keyById = [];
 
-        foreach ($this->rows($data, 'states') as $state) {
-            $key = trim((string) ($state['key'] ?? ''));
+        foreach ($this->rows($graph, 'nodes') as $node) {
+            $key = trim((string) ($node['key'] ?? ''));
 
             if ($key === '') {
                 continue;
             }
 
             $states[] = $key;
+            $keyById[(string) ($node['id'] ?? '')] = $key;
 
-            if (($state['initial'] ?? false) && $initial === '') {
+            if (($node['initial'] ?? false) && $initial === '') {
                 $initial = $key;
             }
         }
 
         $transitions = [];
 
-        foreach ($this->rows($data, 'transitions') as $row) {
-            if (($row['from'] ?? '') !== '' && ($row['to'] ?? '') !== '') {
-                $transitions[(string) $row['from']][] = (string) $row['to'];
+        foreach ($this->rows($graph, 'edges') as $edge) {
+            $from = $keyById[(string) ($edge['from'] ?? '')] ?? '';
+            $to = $keyById[(string) ($edge['to'] ?? '')] ?? '';
+
+            if ($from !== '' && $to !== '') {
+                $transitions[$from][] = $to;
             }
         }
 
         $conditions = [];
 
-        foreach ($this->rows($data, 'conditions') as $row) {
+        foreach ($this->rows($rules, 'conditions') as $row) {
             if (($row['from'] ?? '') === '' || ($row['to'] ?? '') === '' || ($row['field'] ?? '') === '') {
                 continue;
             }
@@ -219,7 +230,7 @@ class WorkflowDesigner extends Page implements HasForms
 
         $actions = [];
 
-        foreach ($this->rows($data, 'actions') as $row) {
+        foreach ($this->rows($rules, 'actions') as $row) {
             if (($row['from'] ?? '') === '' || ($row['to'] ?? '') === '' || ($row['action'] ?? '') === '') {
                 continue;
             }
@@ -229,7 +240,7 @@ class WorkflowDesigner extends Page implements HasForms
 
         $approval = [];
 
-        foreach ($this->rows($data, 'approvals') as $row) {
+        foreach ($this->rows($rules, 'approvals') as $row) {
             $steps = array_values(array_filter(array_map('trim', explode(',', (string) ($row['steps'] ?? '')))));
 
             if (($row['from'] ?? '') !== '' && ($row['to'] ?? '') !== '' && $steps !== []) {
@@ -237,11 +248,11 @@ class WorkflowDesigner extends Page implements HasForms
             }
         }
 
-        $key = (string) ($data['key'] ?? '');
+        $key = (string) ($graph['key'] ?? '');
 
         return new WorkflowBlueprintData(
             $key,
-            (string) ($data['name'] ?? '') ?: $key,
+            (string) ($graph['name'] ?? '') ?: $key,
             $states,
             $transitions,
             $initial !== '' ? $initial : ($states[0] ?? ''),
@@ -252,12 +263,12 @@ class WorkflowDesigner extends Page implements HasForms
     }
 
     /**
-     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>  $bag
      * @return list<array<string, mixed>>
      */
-    private function rows(array $data, string $key): array
+    private function rows(array $bag, string $key): array
     {
-        $rows = $data[$key] ?? [];
+        $rows = $bag[$key] ?? [];
 
         return is_array($rows) ? array_values($rows) : [];
     }
@@ -269,8 +280,8 @@ class WorkflowDesigner extends Page implements HasForms
     {
         $options = [];
 
-        foreach ($this->rows($this->data ?? [], 'states') as $state) {
-            $key = trim((string) ($state['key'] ?? ''));
+        foreach ($this->rows($this->graph, 'nodes') as $node) {
+            $key = trim((string) ($node['key'] ?? ''));
 
             if ($key !== '') {
                 $options[$key] = $key;
