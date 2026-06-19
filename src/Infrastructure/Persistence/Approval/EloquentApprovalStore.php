@@ -6,7 +6,6 @@ namespace Yammi\Workflow\Infrastructure\Persistence\Approval;
 
 use Yammi\Workflow\Application\Contract\ApprovalStore;
 use Yammi\Workflow\Application\DTO\ActorData;
-use Yammi\Workflow\Application\DTO\ApprovalStepData;
 use Yammi\Workflow\Domain\Approval\Enum\ApprovalStatus;
 use Yammi\Workflow\Infrastructure\Persistence\Eloquent\WorkflowApprovalModel;
 use Yammi\Workflow\Infrastructure\Support\SubjectIdentity;
@@ -16,7 +15,7 @@ use Yammi\Workflow\Infrastructure\Support\SubjectIdentity;
  */
 final class EloquentApprovalStore implements ApprovalStore
 {
-    public function replace(object $subject, array $labels): void
+    public function replace(object $subject, array $steps): void
     {
         $type = SubjectIdentity::type($subject);
         $id = SubjectIdentity::id($subject);
@@ -26,18 +25,16 @@ final class EloquentApprovalStore implements ApprovalStore
             ->where('subject_id', $id)
             ->delete();
 
-        $step = 1;
-
-        foreach ($labels as $label) {
+        foreach (array_values($steps) as $index => $input) {
             WorkflowApprovalModel::create([
                 'subject_type' => $type,
                 'subject_id' => $id,
-                'step' => $step,
-                'label' => $label,
+                'step' => $index + 1,
+                'label' => $input->label,
+                'assignee_type' => $input->assignee?->type,
+                'assignee_id' => $input->assignee?->id,
                 'status' => ApprovalStatus::Pending->value,
             ]);
-
-            $step++;
         }
     }
 
@@ -48,15 +45,7 @@ final class EloquentApprovalStore implements ApprovalStore
             ->where('subject_id', SubjectIdentity::id($subject))
             ->orderBy('step')
             ->get()
-            ->map(static fn (WorkflowApprovalModel $approval): ApprovalStepData => new ApprovalStepData(
-                $approval->step,
-                $approval->label,
-                $approval->status,
-                $approval->decided_by_type,
-                $approval->decided_by_id,
-                $approval->comment,
-                $approval->decided_at?->toIso8601String(),
-            ))
+            ->map(ApprovalStepMapper::fromModel(...))
             ->values()
             ->all();
     }

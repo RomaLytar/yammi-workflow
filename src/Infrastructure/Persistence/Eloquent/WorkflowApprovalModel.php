@@ -14,6 +14,8 @@ use Yammi\Workflow\Domain\Approval\Enum\ApprovalStatus;
  * @property string $subject_id
  * @property int $step
  * @property string $label
+ * @property string|null $assignee_type
+ * @property string|null $assignee_id
  * @property ApprovalStatus $status
  * @property string|null $decided_by_type
  * @property string|null $decided_by_id
@@ -29,6 +31,8 @@ final class WorkflowApprovalModel extends Model
         'subject_id',
         'step',
         'label',
+        'assignee_type',
+        'assignee_id',
         'status',
         'decided_by_type',
         'decided_by_id',
