@@ -64,14 +64,12 @@ final class ApprovalManager
      */
     private function normalize(array $steps): array
     {
-        if (array_is_list($steps)) {
-            return array_map(static fn (string $label): ApprovalStepInput => new ApprovalStepInput($label), $steps);
-        }
-
         $inputs = [];
 
         foreach ($steps as $label => $assignee) {
-            $inputs[] = new ApprovalStepInput((string) $label, $this->actor($assignee));
+            $inputs[] = is_string($assignee)
+                ? new ApprovalStepInput($assignee)
+                : new ApprovalStepInput((string) $label, $this->actor($assignee));
         }
 
         return $inputs;
