@@ -82,20 +82,4 @@ return [
     'tenancy' => [
         'column' => 'tenant_id',
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Admin UI (Filament)
-    |--------------------------------------------------------------------------
-    |
-    | The optional Filament panel that lists pending approvals and renders the
-    | transition history. Disable it entirely, or run it behind your own
-    | middleware stack and route prefix.
-    |
-    */
-    'ui' => [
-        'enabled' => (bool) env('WORKFLOW_UI_ENABLED', true),
-        'prefix' => env('WORKFLOW_UI_PREFIX', 'workflow'),
-        'middleware' => ['web', 'auth'],
-    ],
 ];
