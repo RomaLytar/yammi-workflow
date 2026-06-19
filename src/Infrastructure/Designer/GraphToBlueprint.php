@@ -13,8 +13,9 @@ final class GraphToBlueprint
 {
     /**
      * @param  array{key: string, name?: string, nodes: list<array{id: string, key: string, initial?: bool}>, edges: list<array{from: string, to: string}>}  $graph
+     * @param  array<string, list<array{field: string, operator: string, value: string}>>  $conditions  keyed by "from>to"
      */
-    public static function convert(array $graph): WorkflowBlueprintData
+    public static function convert(array $graph, array $conditions = []): WorkflowBlueprintData
     {
         $idToKey = [];
         $states = [];
@@ -45,6 +46,7 @@ final class GraphToBlueprint
             $states,
             $transitions,
             $initial ?? ($states[0] ?? ''),
+            $conditions,
         );
     }
 }
