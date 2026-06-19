@@ -1,6 +1,13 @@
 <x-filament-panels::page>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/drawflow@0.0.59/dist/drawflow.min.css">
 
+    <style>
+        .wf-node { padding: 4px; }
+        .wf-key { width: 110px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 8px; font-weight: 600; font-size: 13px; }
+        .drawflow .drawflow-node { border-radius: 10px; border: 1px solid #cbd5e1; background: #fff; box-shadow: 0 1px 3px rgba(15,23,42,.08); }
+        .dark .drawflow .drawflow-node { background: #1f2937; border-color: #374151; }
+    </style>
+
     <div
         wire:ignore
         x-data="workflowDesigner(@js($graph))"
@@ -11,16 +18,28 @@
             <x-filament::button color="gray" type="button" x-on:click="addState()" icon="heroicon-o-plus">
                 Add state
             </x-filament::button>
+
+            <label class="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-300">
+                Initial:
+                <input x-model="initialKey" class="rounded-md border-gray-300 text-sm dark:bg-gray-800" style="width: 110px" placeholder="draft">
+            </label>
+
             <x-filament::button type="button" x-on:click="sync().then(() => $wire.save())" icon="heroicon-o-check">
                 Save as new version
             </x-filament::button>
-            <span class="text-sm text-gray-500" x-text="`${graph.nodes.length} states, ${graph.edges.length} transitions`"></span>
+
+            <span class="text-xs text-gray-400" x-text="hint"></span>
         </div>
+
+        <p class="text-xs text-gray-500">
+            Drag a node to move it. Drag from a node's right dot to another node's left dot to add a transition.
+            Right-click a node or a connection to delete it. Edit a state name in its box.
+        </p>
 
         <div
             x-ref="canvas"
             class="fi-wo-canvas"
-            style="height: 50vh; border: 1px solid rgb(229 231 235); border-radius: 0.75rem; background:
+            style="height: 52vh; border: 1px solid rgb(229 231 235); border-radius: 0.75rem; background:
                 radial-gradient(rgb(229 231 235) 1px, transparent 1px); background-size: 18px 18px;"
         ></div>
     </div>
@@ -148,10 +167,16 @@
                 return {
                     graph: initial,
                     editor: null,
-                    nodeIds: {},
+                    initialKey: (initial.nodes.find(n => n.initial) || initial.nodes[0] || {}).key || '',
+                    hint: '',
+
+                    nodeHtml() {
+                        return '<div class="wf-node"><input df-key class="wf-key" placeholder="state"></div>';
+                    },
 
                     boot() {
                         if (typeof Drawflow === 'undefined') {
+                            this.hint = 'editor failed to load';
                             return;
                         }
 
@@ -159,59 +184,79 @@
                         this.editor.reroute = true;
                         this.editor.start();
 
+                        const drawId = {};
                         let x = 60;
+
                         this.graph.nodes.forEach((node, index) => {
-                            const html = `<div style="padding:6px 10px;font-weight:600">${node.key}${node.initial ? ' &#9733;' : ''}</div>`;
-                            const id = this.editor.addNode(node.key, 1, 1, x, 80 + (index % 2) * 120, 'wf-node', {}, html);
-                            this.nodeIds[node.id] = id;
-                            x += 200;
+                            const id = this.editor.addNode(
+                                node.key, 1, 1, x, 70 + (index % 2) * 130, 'wf-node',
+                                { key: node.key }, this.nodeHtml(),
+                            );
+                            drawId[node.id] = id;
+                            x += 190;
                         });
 
                         this.graph.edges.forEach((edge) => {
-                            const from = this.nodeIds[edge.from];
-                            const to = this.nodeIds[edge.to];
-                            if (from && to) {
-                                this.editor.addConnection(from, to, 'output_1', 'input_1');
+                            if (drawId[edge.from] && drawId[edge.to]) {
+                                this.editor.addConnection(drawId[edge.from], drawId[edge.to], 'output_1', 'input_1');
                             }
                         });
+
+                        this.updateHint();
+                        this.editor.on('nodeRemoved', () => this.updateHint());
+                        this.editor.on('connectionCreated', () => this.updateHint());
+                        this.editor.on('connectionRemoved', () => this.updateHint());
                     },
 
                     addState() {
-                        const key = prompt('State key (e.g. paid)');
-                        if (! key) {
+                        if (! this.editor) {
                             return;
                         }
-                        const id = 'n' + (this.graph.nodes.length + 1) + '_' + Date.now();
-                        this.graph.nodes.push({ id, key });
-                        if (this.editor) {
-                            const drawId = this.editor.addNode(key, 1, 1, 80, 80, 'wf-node', {}, `<div style="padding:6px 10px;font-weight:600">${key}</div>`);
-                            this.nodeIds[id] = drawId;
+                        this.editor.addNode('state', 1, 1, 80, 80, 'wf-node', { key: '' }, this.nodeHtml());
+                        this.updateHint();
+                    },
+
+                    snapshot() {
+                        const data = this.editor.export().drawflow.Home.data;
+                        const nodes = [];
+                        const edges = [];
+
+                        Object.values(data).forEach((node) => {
+                            const key = (node.data && node.data.key) ? String(node.data.key).trim() : '';
+                            if (key !== '') {
+                                nodes.push({ id: 'd' + node.id, key, initial: key === this.initialKey });
+                            }
+                        });
+
+                        Object.values(data).forEach((node) => {
+                            const conns = (node.outputs && node.outputs.output_1 && node.outputs.output_1.connections) || [];
+                            conns.forEach((conn) => {
+                                const from = data[node.id], to = data[conn.node];
+                                const fromKey = from && from.data ? String(from.data.key || '').trim() : '';
+                                const toKey = to && to.data ? String(to.data.key || '').trim() : '';
+                                if (fromKey !== '' && toKey !== '') {
+                                    edges.push({ from: 'd' + node.id, to: 'd' + conn.node });
+                                }
+                            });
+                        });
+
+                        return { nodes, edges };
+                    },
+
+                    updateHint() {
+                        if (! this.editor) {
+                            return;
                         }
+                        const snap = this.snapshot();
+                        this.hint = snap.nodes.length + ' states, ' + snap.edges.length + ' transitions';
                     },
 
                     async sync() {
                         if (! this.editor) {
                             return;
                         }
-                        const data = this.editor.export().drawflow.Home.data;
-                        const drawToOur = {};
-                        Object.values(this.nodeIds).forEach((drawId, i) => {
-                            drawToOur[drawId] = Object.keys(this.nodeIds)[i];
-                        });
-
-                        const edges = [];
-                        Object.values(data).forEach((node) => {
-                            const outputs = node.outputs?.output_1?.connections ?? [];
-                            outputs.forEach((conn) => {
-                                const from = drawToOur[node.id];
-                                const to = drawToOur[conn.node];
-                                if (from && to) {
-                                    edges.push({ from, to });
-                                }
-                            });
-                        });
-
-                        this.graph.edges = edges;
+                        const snap = this.snapshot();
+                        this.graph = { ...this.graph, nodes: snap.nodes, edges: snap.edges };
                         await this.$wire.set('graph', this.graph);
                     },
                 };
