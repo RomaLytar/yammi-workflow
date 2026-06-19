@@ -22,7 +22,5 @@ abstract class TestCase extends Orchestra
             'database' => ':memory:',
             'prefix' => '',
         ]);
-        $app['config']->set('workflow.ui.enabled', true);
-        $app['config']->set('workflow.ui.middleware', []);
     }
 }
