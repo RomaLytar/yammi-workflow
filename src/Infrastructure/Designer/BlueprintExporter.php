@@ -60,16 +60,20 @@ final class BlueprintExporter
 
             $transitions[$from][] = $to;
 
-            if (($def->conditions ?? []) !== []) {
-                $conditions[$edge] = $def->conditions;
+            $edgeConditions = $def->conditions ?? [];
+            $edgeActions = $def->actions ?? [];
+            $edgeApproval = $def->approval ?? [];
+
+            if ($edgeConditions !== []) {
+                $conditions[$edge] = $edgeConditions;
             }
 
-            if (($def->actions ?? []) !== []) {
-                $actions[$edge] = $def->actions;
+            if ($edgeActions !== []) {
+                $actions[$edge] = $edgeActions;
             }
 
-            if (($def->approval ?? []) !== []) {
-                $approval[$edge] = $def->approval;
+            if ($edgeApproval !== []) {
+                $approval[$edge] = $edgeApproval;
             }
         }
 
