@@ -59,22 +59,9 @@ final class BlueprintExporter
             $edge = "{$from}>{$to}";
 
             $transitions[$from][] = $to;
-
-            $edgeConditions = $def->conditions ?? [];
-            $edgeActions = $def->actions ?? [];
-            $edgeApproval = $def->approval ?? [];
-
-            if ($edgeConditions !== []) {
-                $conditions[$edge] = $edgeConditions;
-            }
-
-            if ($edgeActions !== []) {
-                $actions[$edge] = $edgeActions;
-            }
-
-            if ($edgeApproval !== []) {
-                $approval[$edge] = $edgeApproval;
-            }
+            $conditions[$edge] = $def->conditions ?? [];
+            $actions[$edge] = $def->actions ?? [];
+            $approval[$edge] = $def->approval ?? [];
         }
 
         return [
@@ -83,9 +70,9 @@ final class BlueprintExporter
             'initial' => $initial,
             'states' => $states,
             'transitions' => $transitions,
-            'conditions' => $conditions,
-            'actions' => $actions,
-            'approval' => $approval,
+            'conditions' => array_filter($conditions),
+            'actions' => array_filter($actions),
+            'approval' => array_filter($approval),
         ];
     }
 }
