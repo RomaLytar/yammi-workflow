@@ -10,6 +10,7 @@ use Yammi\Workflow\Infrastructure\Console\TickWorkflowsCommand;
 use Yammi\Workflow\Infrastructure\Console\WorkflowDiagramCommand;
 use Yammi\Workflow\Infrastructure\Console\WorkflowExportCommand;
 use Yammi\Workflow\Infrastructure\Console\WorkflowImportCommand;
+use Yammi\Workflow\Infrastructure\Console\WorkflowLintCommand;
 use Yammi\Workflow\Infrastructure\Console\WorkflowListCommand;
 use Yammi\Workflow\Infrastructure\Console\WorkflowShowCommand;
 use Yammi\Workflow\Infrastructure\Provider\ActionBindings;
@@ -64,6 +65,7 @@ final class WorkflowServiceProvider extends ServiceProvider
                 WorkflowDiagramCommand::class,
                 WorkflowExportCommand::class,
                 WorkflowImportCommand::class,
+                WorkflowLintCommand::class,
                 PruneHistoryCommand::class,
             ]);
 

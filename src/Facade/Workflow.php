@@ -15,6 +15,7 @@ use Yammi\Workflow\Infrastructure\Api\WorkflowManager;
  * @method static \Yammi\Workflow\Application\DTO\TransitionResultData transition(object $subject, string $to, ?string $reason = null, array $meta = [])
  * @method static array<string, int> metrics(string $workflow)
  * @method static string diagram(string $workflow)
+ * @method static \Yammi\Workflow\Domain\Workflow\Analysis\WorkflowAnalysis analyze(string $workflow)
  *
  * @see WorkflowManager
  */
