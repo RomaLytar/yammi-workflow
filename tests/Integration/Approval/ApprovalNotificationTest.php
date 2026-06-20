@@ -9,20 +9,14 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Schema;
 use Yammi\Workflow\Facade\Approval;
+use Yammi\Workflow\Infrastructure\Notification\ApprovalAssignedNotification;
 use Yammi\Workflow\Tests\Support\Invoice;
 use Yammi\Workflow\Tests\Support\User;
 use Yammi\Workflow\Tests\TestCase;
 
-final class ApprovalInboxTest extends TestCase
+final class ApprovalNotificationTest extends TestCase
 {
     use RefreshDatabase;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        Notification::fake();
-    }
 
     protected function defineDatabaseMigrations(): void
     {
@@ -37,24 +31,34 @@ final class ApprovalInboxTest extends TestCase
         });
     }
 
-    public function test_an_assigned_user_sees_only_their_current_step(): void
+    public function test_the_assignee_is_notified_when_their_step_becomes_current(): void
     {
+        Notification::fake();
+
         $manager = User::create(['name' => 'Manager']);
-        $finance = User::create(['name' => 'Finance']);
         $invoice = Invoice::create();
 
-        Approval::request($invoice, ['manager' => $manager, 'finance' => $finance]);
+        Approval::request($invoice, ['manager' => $manager]);
 
-        $managerInbox = Approval::pendingFor($manager);
-        $this->assertCount(1, $managerInbox);
-        $this->assertSame('manager', $managerInbox[0]->label);
-        $this->assertSame(User::class, $managerInbox[0]->assigneeType);
+        Notification::assertSentTo(
+            $manager,
+            ApprovalAssignedNotification::class,
+            static function (ApprovalAssignedNotification $notification) use ($manager): bool {
+                $data = $notification->toArray($manager);
+                $mail = $notification->toMail($manager);
 
-        $this->assertCount(0, Approval::pendingFor($finance));
+                return $notification->via($manager) === ['database']
+                    && $data['step'] === 1
+                    && $data['label'] === 'manager'
+                    && str_contains((string) $mail->subject, 'approval');
+            },
+        );
     }
 
-    public function test_the_inbox_advances_as_steps_are_approved(): void
+    public function test_the_next_assignee_is_notified_after_an_approval(): void
     {
+        Notification::fake();
+
         $manager = User::create(['name' => 'Manager']);
         $finance = User::create(['name' => 'Finance']);
         $invoice = Invoice::create();
@@ -62,10 +66,6 @@ final class ApprovalInboxTest extends TestCase
         Approval::request($invoice, ['manager' => $manager, 'finance' => $finance]);
         Approval::approve($invoice);
 
-        $this->assertCount(0, Approval::pendingFor($manager));
-
-        $financeInbox = Approval::pendingFor($finance);
-        $this->assertCount(1, $financeInbox);
-        $this->assertSame('finance', $financeInbox[0]->label);
+        Notification::assertSentTo($finance, ApprovalAssignedNotification::class);
     }
 }
