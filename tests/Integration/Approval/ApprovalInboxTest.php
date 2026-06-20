@@ -6,6 +6,7 @@ namespace Yammi\Workflow\Tests\Integration\Approval;
 
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Schema;
 use Yammi\Workflow\Facade\Approval;
 use Yammi\Workflow\Tests\Support\Invoice;
@@ -15,6 +16,13 @@ use Yammi\Workflow\Tests\TestCase;
 final class ApprovalInboxTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Notification::fake();
+    }
 
     protected function defineDatabaseMigrations(): void
     {
