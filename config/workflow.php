@@ -82,4 +82,19 @@ return [
     'tenancy' => [
         'column' => 'tenant_id',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Notifications
+    |--------------------------------------------------------------------------
+    |
+    | When a step becomes the current one, its assignee is notified. Turn it
+    | off entirely, or choose the channels the notification is sent on (any
+    | Laravel notification channel; 'database' needs the notifications table).
+    |
+    */
+    'notifications' => [
+        'enabled' => (bool) env('WORKFLOW_NOTIFICATIONS', true),
+        'channels' => ['database'],
+    ],
 ];

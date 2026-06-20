@@ -16,6 +16,7 @@ final class ApproveStepAction
     public function __construct(
         private readonly ApprovalStore $approvals,
         private readonly ActorResolver $actors,
+        private readonly NotifyCurrentAssignee $notify,
     ) {}
 
     public function __invoke(object $subject, ?string $comment = null): ApprovalSummaryData
@@ -28,6 +29,10 @@ final class ApproveStepAction
 
         $this->approvals->decide($subject, $summary->currentStep, ApprovalStatus::Approved, $this->actors->resolve(), $comment);
 
-        return ApprovalSummaryData::fromSteps($this->approvals->steps($subject));
+        $steps = $this->approvals->steps($subject);
+
+        ($this->notify)($subject, $steps);
+
+        return ApprovalSummaryData::fromSteps($steps);
     }
 }

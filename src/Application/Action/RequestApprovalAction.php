@@ -11,6 +11,7 @@ final class RequestApprovalAction
 {
     public function __construct(
         private readonly ApprovalStore $approvals,
+        private readonly NotifyCurrentAssignee $notify,
     ) {}
 
     /**
@@ -19,5 +20,7 @@ final class RequestApprovalAction
     public function __invoke(object $subject, array $steps): void
     {
         $this->approvals->replace($subject, $steps);
+
+        ($this->notify)($subject, $this->approvals->steps($subject));
     }
 }
